@@ -1,3 +1,4 @@
+import os
 import zipfile
 
 
@@ -9,4 +10,5 @@ def extract(filename):
 
 
 if __name__ == "__main__":
-    extract('data/CASIA-WebFace.zip')
+    if not os.path.isdir('data/CASIA-WebFace'):
+        extract('data/CASIA-WebFace.zip')
