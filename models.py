@@ -1,4 +1,3 @@
-import torch.nn.functional as F
 import torchvision
 from torch import nn
 from torchsummary import summary
@@ -28,30 +27,21 @@ class ArcFaceModel(nn.Module):
         resnet = torchvision.models.resnet50(pretrained=True)
 
         # Remove linear and pool layers (since we're not doing classification)
-        modules = list(resnet.children())[:-1]
+        modules = list(resnet.children())[:-2]
         self.resnet = nn.Sequential(*modules)
-        self.pool = nn.AvgPool2d(4)
-        self.fc1 = nn.Linear(512, 512)
-        self.age_pred = nn.Linear(512, 1)
-
-        self.fc2 = nn.Linear(512, 512)
-        self.gen_pred = nn.Linear(512, gen_num_classes)
-
-        nn.init.xavier_uniform_(self.age_pred.weight)
-        nn.init.xavier_uniform_(self.gen_pred.weight)
+        self.bn1 = nn.BatchNorm2d(2048)
+        self.dropout = nn.Dropout()
+        self.fc = nn.Linear(2048 * 4 * 4, 512)
+        self.bn2 = nn.BatchNorm1d(512)
 
     def forward(self, images):
-        x = self.resnet(images)  # [N, 512, 1, 1]
-        x = self.pool(x)
-        x = x.view(-1, 512)  # [N, 512]
-
-        age_out = F.relu(self.fc1(x))  # [N, 512]
-        age_out = self.age_pred(age_out)  # [N, 1]
-
-        gen_out = F.relu(self.fc2(x))  # [N, 512]
-        gen_out = F.softmax(self.gen_pred(gen_out), dim=1)  # [N, 2]
-
-        return age_out, gen_out
+        x = self.resnet(images)  # [N, 512, 4, 4]
+        x = self.bn1(x)
+        x = self.dropout(x)
+        x = x.view(x.size(0), -1)  # [N, 512]
+        x = self.fc(x)
+        x = self.bn2(x)
+        return x
 
 
 if __name__ == "__main__":
