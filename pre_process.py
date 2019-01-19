@@ -48,10 +48,13 @@ if __name__ == "__main__":
     subjects = [d for d in os.listdir('data/CASIA-WebFace') if os.path.isdir(os.path.join('data/CASIA-WebFace', d))]
     for sub in tqdm(subjects):
         folder = os.path.join('data/CASIA-WebFace', sub)
+        # print(folder)
         files = [f for f in os.listdir(folder) if
                  os.path.isfile(os.path.join(folder, f)) and f.lower().endswith('.jpg')]
+        # print(files)
         for file in files:
-            filename = os.path.isfile(os.path.join(folder, file))
+            filename = os.path.join(folder, file)
+            # print(filename)
             is_valid, face_location, landmarks = get_face_attributes(filename)
             if is_valid:
                 samples.append(
