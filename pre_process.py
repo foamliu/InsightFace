@@ -40,7 +40,6 @@ if __name__ == "__main__":
     assert (len(subjects) == 10575), "Number of subjects is: {}!".format(len(subjects))
 
     file_names = []
-
     for i in range(len(subjects)):
         sub = subjects[i]
         folder = os.path.join('data/CASIA-WebFace', sub)
