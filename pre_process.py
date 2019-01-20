@@ -41,7 +41,8 @@ if __name__ == "__main__":
     subjects = [d for d in os.listdir('data/CASIA-WebFace') if os.path.isdir(os.path.join('data/CASIA-WebFace', d))]
     assert (len(subjects) == 10575), "Number of subjects is: {}!".format(len(subjects))
 
-    for i, sub in tqdm(enumerate(subjects)):
+    for i in tqdm(range(len(subjects))):
+        sub = subjects[i]
         folder = os.path.join('data/CASIA-WebFace', sub)
         # print(folder)
         files = [f for f in os.listdir(folder) if
