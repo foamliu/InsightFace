@@ -1,4 +1,3 @@
-import json
 import pickle
 import random
 
@@ -12,7 +11,7 @@ from models import data_transforms
 from utils import align_face
 
 
-class AgeGenDataset(Dataset):
+class ArcFaceDataset(Dataset):
     def __init__(self, split):
         with open(pickle_file, 'rb') as file:
             data = pickle.load(file)
@@ -37,9 +36,8 @@ class AgeGenDataset(Dataset):
         img = align_face(full_path, landmarks)
         img = transforms.ToPILImage()(img)
         img = self.transformer(img)
-        age = sample['age']
-        gender = sample['gender']
-        return img, age, gender
+        class_id = sample['class_id']
+        return img, class_id
 
     def __len__(self):
         return len(self.samples)
@@ -57,17 +55,12 @@ if __name__ == "__main__":
     sample_inputs = []
     for i, sample in enumerate(samples):
         full_path = sample['full_path']
-        age = sample['age']
-        gender = sample['gender']
-        face_location = sample['face_location']
-        x1, y1, x2, y2 = face_location[0], face_location[1], face_location[2], face_location[3]
-        print(gender, age, full_path)
-        img = cv.imread(full_path)
-        img = img[y1:y2, x1:x2]
-        img = cv.resize(img, (image_w, image_h))
+        subject = sample['subject']
+        landmarks = sample['landmarks']
+        raw = cv.imread(full_path)
+        raw = cv.resize(raw, (224, 224))
+        img = align_face(full_path, landmarks)
+        filename = 'images/{}_raw.jpg'.format(i)
+        cv.imwrite(filename, raw)
         filename = 'images/{}_img.jpg'.format(i)
         cv.imwrite(filename, img)
-        sample_inputs.append({'i': i, 'gender': gender, 'age': age})
-
-    with open('sample_inputs.json', 'w') as file:
-        json.dump(sample_inputs, file, indent=4, ensure_ascii=False)
