@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     samples = []
     subjects = [d for d in os.listdir('data/CASIA-WebFace') if os.path.isdir(os.path.join('data/CASIA-WebFace', d))]
-    for sub in tqdm(subjects):
+    for i, sub in tqdm(enumerate(subjects)):
         folder = os.path.join('data/CASIA-WebFace', sub)
         # print(folder)
         files = [f for f in os.listdir(folder) if
@@ -58,12 +58,13 @@ if __name__ == "__main__":
             is_valid, face_location, landmarks = get_face_attributes(filename)
             if is_valid:
                 samples.append(
-                    {'subject': sub, 'full_path': filename, 'face_location': face_location, 'landmarks': landmarks})
+                    {'class_id': i, 'subject': sub, 'full_path': filename, 'face_location': face_location,
+                     'landmarks': landmarks})
 
-    np.random.shuffle(samples)
-    f = open(pickle_file, 'wb')
-    save = {
-        'samples': samples
-    }
-    pickle.dump(save, f, pickle.HIGHEST_PROTOCOL)
-    f.close()
+                np.random.shuffle(samples)
+            f = open(pickle_file, 'wb')
+            save = {
+                'samples': samples
+            }
+            pickle.dump(save, f, pickle.HIGHEST_PROTOCOL)
+            f.close()
