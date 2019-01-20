@@ -21,23 +21,16 @@ def get_face_attributes(full_path):
     try:
         img = Image.open(full_path).convert('RGB')
         bounding_boxes, landmarks = detect_faces(img)
-        width, height = img.size
 
-        if len(bounding_boxes) == 1:
-            x1, y1, x2, y2 = bounding_boxes[0][0], bounding_boxes[0][1], bounding_boxes[0][2], bounding_boxes[0][3]
-            if x1 < 0 or x1 >= width or x2 < 0 or x2 >= width or y1 < 0 or y1 >= height or y2 < 0 or y2 >= height or x1 >= x2 or y1 >= y2:
-                return False, None, None
-
+        if len(landmarks) == 1:
             landmarks = [int(round(x)) for x in landmarks[0]]
-            is_valid = (x2 - x1) > width / 10 and (y2 - y1) > height / 10
-
-            return is_valid, (int(round(x1)), int(round(y1)), int(round(x2)), int(round(y2))), landmarks
+            return True, landmarks
 
     except KeyboardInterrupt:
         raise
     except:
         pass
-    return False, None, None
+    return False, None
 
 
 if __name__ == "__main__":
@@ -46,6 +39,8 @@ if __name__ == "__main__":
 
     samples = []
     subjects = [d for d in os.listdir('data/CASIA-WebFace') if os.path.isdir(os.path.join('data/CASIA-WebFace', d))]
+    assert (len(subjects) == 10575), "Number of subjects is: {}!".format(len(subjects))
+
     for i, sub in tqdm(enumerate(subjects)):
         folder = os.path.join('data/CASIA-WebFace', sub)
         # print(folder)
@@ -55,11 +50,10 @@ if __name__ == "__main__":
         for file in files:
             filename = os.path.join(folder, file)
             # print(filename)
-            is_valid, face_location, landmarks = get_face_attributes(filename)
+            is_valid, landmarks = get_face_attributes(filename)
             if is_valid:
                 samples.append(
-                    {'class_id': i, 'subject': sub, 'full_path': filename, 'face_location': face_location,
-                     'landmarks': landmarks})
+                    {'class_id': i, 'subject': sub, 'full_path': filename, 'landmarks': landmarks})
 
                 np.random.shuffle(samples)
             f = open(pickle_file, 'wb')
