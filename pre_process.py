@@ -2,7 +2,6 @@ import os
 import pickle
 import zipfile
 
-import numpy as np
 from PIL import Image
 from tqdm import tqdm
 
@@ -56,10 +55,9 @@ if __name__ == "__main__":
                 samples.append(
                     {'class_id': i, 'subject': sub, 'full_path': filename, 'landmarks': landmarks})
 
-                np.random.shuffle(samples)
-            f = open(pickle_file, 'wb')
-            save = {
-                'samples': samples
-            }
-            pickle.dump(save, f, pickle.HIGHEST_PROTOCOL)
-            f.close()
+    f = open(pickle_file, 'wb')
+    save = {
+        'samples': samples
+    }
+    pickle.dump(save, f, pickle.HIGHEST_PROTOCOL)
+    f.close()
