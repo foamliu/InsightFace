@@ -3,8 +3,8 @@ import torch.utils.data
 from tensorboardX import SummaryWriter
 from torch import nn
 
-from data_gen import AgeGenDataset
-from models import AgeGenPredModel
+from data_gen import ArcFaceDataset
+from models import ArcFaceModel
 from utils import *
 
 
@@ -15,7 +15,7 @@ def main():
 
     # Initialize / load checkpoint
     if checkpoint is None:
-        model = AgeGenPredModel()
+        model = ArcFaceModel()
         optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr,
                                      weight_decay=5e-4)
     else:
@@ -36,10 +36,10 @@ def main():
     criterion_info = (age_criterion, gender_criterion, age_loss_weight)
 
     # Custom dataloaders
-    train_dataset = AgeGenDataset('train')
+    train_dataset = ArcFaceDataset('train')
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers,
                                                pin_memory=True)
-    val_dataset = AgeGenDataset('valid')
+    val_dataset = ArcFaceDataset('valid')
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=workers,
                                              pin_memory=True)
 
