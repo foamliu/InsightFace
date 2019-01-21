@@ -29,11 +29,7 @@ def main():
     model = model.to(device)
 
     # Loss function
-    age_criterion = nn.L1Loss().to(device)
-    gender_criterion = nn.CrossEntropyLoss().to(device)
-    l1_criterion = nn.L1Loss().to(device)
-    age_loss_weight = 0.1
-    criterion_info = (age_criterion, gender_criterion, age_loss_weight)
+    criterion = nn.CrossEntropyLoss().to(device)
 
     # Custom dataloaders
     train_dataset = ArcFaceDataset('train')
@@ -55,7 +51,7 @@ def main():
         # One epoch's training
         train_loss, train_gen_accs, train_age_mae = train(train_loader=train_loader,
                                                           model=model,
-                                                          criterion_info=criterion_info,
+                                                          criterion=criterion,
                                                           optimizer=optimizer,
                                                           epoch=epoch)
         train_dataset.shuffle()
@@ -66,7 +62,7 @@ def main():
         # One epoch's validation
         valid_loss, valid_gen_accs, valid_age_mae = validate(val_loader=val_loader,
                                                              model=model,
-                                                             criterion_info=criterion_info)
+                                                             criterion=criterion)
 
         writer.add_scalar('Valid Loss', valid_loss, epoch)
         writer.add_scalar('Valid Gender Accuracy', valid_gen_accs, epoch)
@@ -85,33 +81,24 @@ def main():
         save_checkpoint(epoch, epochs_since_improvement, model, optimizer, best_loss, is_best)
 
 
-def train(train_loader, model, criterion_info, optimizer, epoch):
+def train(train_loader, model, criterion, optimizer, epoch):
     model.train()  # train mode (dropout and batchnorm is used)
 
     losses = AverageMeter()
-    gen_losses = AverageMeter()
-    age_losses = AverageMeter()
-    gen_accs = AverageMeter()  # gender accuracy
-    age_mae = AverageMeter()  # age mae
-
-    age_criterion, gender_criterion, age_loss_weight = criterion_info
+    top5_accs = AverageMeter()
 
     # Batches
-    for i, (inputs, age_true, gen_true) in enumerate(train_loader):
+    for i, (inputs, class_id_true) in enumerate(train_loader):
         chunk_size = inputs.size()[0]
         # Move to GPU, if available
         inputs = inputs.to(device)
-        age_true = age_true.view(-1, 1).float().to(device)  # [N, 1]
-        gen_true = gen_true.to(device)  # [N, 1]
+        class_id_true = class_id_true.to(device)  # [N, 1]
 
         # Forward prop.
-        age_out, gen_out = model(inputs)  # age_out => [N, 1], gen_out => [N, 2]
+        class_id_out = model(inputs)  # age_out => [N, 1], gen_out => [N, 2]
 
         # Calculate loss
-        gen_loss = gender_criterion(gen_out, gen_true)
-        age_loss = age_criterion(age_out, age_true)
-        age_loss *= age_loss_weight
-        loss = gen_loss + age_loss
+        loss = criterion(class_id_out, class_id_true)
 
         # Back prop.
         optimizer.zero_grad()
@@ -124,83 +111,54 @@ def train(train_loader, model, criterion_info, optimizer, epoch):
         optimizer.step()
 
         # Keep track of metrics
-        gen_accuracy = accuracy(gen_out, gen_true)
-        age_mae_loss = l1_criterion(age_out, age_true)
         losses.update(loss.item(), chunk_size)
-        gen_losses.update(gen_loss.item(), chunk_size)
-        age_losses.update(age_loss.item(), chunk_size)
-        gen_accs.update(gen_accuracy, chunk_size)
-        age_mae.update(age_mae_loss)
+        top5_accuracy = accuracy(class_id_out, class_id_true, 5)
+        top5_accs.update(top5_accuracy, chunk_size)
 
         # Print status
         if i % print_freq == 0:
             print('Epoch: [{0}][{1}/{2}]\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Gender Loss {gen_loss.val:.4f} ({gen_loss.avg:.4f})\t'
-                  'Age Loss {age_loss.val:.4f} ({age_loss.avg:.4f})\t'
-                  'Gender Accuracy {gen_accs.val:.3f} ({gen_accs.avg:.3f})\t'
-                  'Age MAE {age_mae.val:.3f} ({age_mae.avg:.3f})'.format(epoch, i, len(train_loader),
-                                                                         loss=losses,
-                                                                         gen_loss=gen_losses,
-                                                                         age_loss=age_losses,
-                                                                         gen_accs=gen_accs,
-                                                                         age_mae=age_mae))
+                  'Top5 Accuracy {top5_accs.val:.3f} ({top5_accs.avg:.3f})'.format(epoch, i, len(train_loader),
+                                                                                   loss=losses,
+                                                                                   top5_accs=top5_accs))
 
-    return losses.avg, gen_accs.avg, age_mae.avg
+    return losses.avg
 
 
-def validate(val_loader, model, criterion_info):
+def validate(val_loader, model, criterion):
     model.eval()  # eval mode (no dropout or batchnorm)
 
     losses = AverageMeter()
-    gen_losses = AverageMeter()
-    age_losses = AverageMeter()
-    gen_accs = AverageMeter()  # gender accuracy
-    age_mae = AverageMeter()  # age mae
-
-    age_criterion, gender_criterion, age_loss_weight = criterion_info
+    top5_accs = AverageMeter()
 
     with torch.no_grad():
         # Batches
-        for i, (inputs, age_true, gen_true) in enumerate(val_loader):
+        for i, (inputs, class_id_true) in enumerate(val_loader):
             chunk_size = inputs.size()[0]
             # Move to GPU, if available
             inputs = inputs.to(device)
-            age_true = age_true.view(-1, 1).float().to(device)
-            gen_true = gen_true.to(device)
+            class_id_true = class_id_true.to(device)
 
             # Forward prop.
-            age_out, gen_out = model(inputs)
+            class_id_out = model(inputs)
 
             # Calculate loss
-            gen_loss = gender_criterion(gen_out, gen_true)
-            age_loss = age_criterion(age_out, age_true)
-            age_loss *= age_loss_weight
-            loss = gen_loss + age_loss
+            loss = criterion(class_id_out, class_id_true)
 
             # Keep track of metrics
-            gender_accuracy = accuracy(gen_out, gen_true)
-            age_mae_loss = l1_criterion(age_out, age_true)
             losses.update(loss.item(), chunk_size)
-            gen_losses.update(gen_loss.item(), chunk_size)
-            age_losses.update(age_loss.item(), chunk_size)
-            gen_accs.update(gender_accuracy, chunk_size)
-            age_mae.update(age_mae_loss, chunk_size)
+            top5_accuracy = accuracy(class_id_out, class_id_true, 5)
+            top5_accs.update(top5_accuracy, chunk_size)
 
             if i % print_freq == 0:
                 print('Validation: [{0}/{1}]\t'
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                      'Gender Loss {gen_loss.val:.4f} ({gen_loss.avg:.4f})\t'
-                      'Age Loss {age_loss.val:.4f} ({age_loss.avg:.4f})\t'
-                      'Gender Accuracy {gen_accs.val:.3f} ({gen_accs.avg:.3f})\t'
-                      'Age MAE {age_mae.val:.3f} ({age_mae.avg:.3f})'.format(i, len(val_loader),
-                                                                             loss=losses,
-                                                                             gen_loss=gen_losses,
-                                                                             age_loss=age_losses,
-                                                                             gen_accs=gen_accs,
-                                                                             age_mae=age_mae))
+                      'Top5 Accuracy {top5_accs.val:.3f} ({top5_accs.avg:.3f})'.format(i, len(val_loader),
+                                                                                       loss=losses,
+                                                                                       top5_accs=top5_accs))
 
-    return losses.avg, gen_accs.avg, age_mae.avg
+    return losses.avg
 
 
 if __name__ == '__main__':
