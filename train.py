@@ -100,10 +100,13 @@ def train(train_loader, encoder, model, criterion, encoder_optimizer, model_opti
         # Move to GPU, if available
         inputs = inputs.to(device)
         class_id_true = class_id_true.to(device)  # [N, 1]
+        # print('class_id_true.size(): ' + str(class_id_true.size()))
 
         # Forward prop.
         embedding = encoder(inputs)  # embedding => [N, 512]
+        # print('embedding.size(): ' + str(embedding.size()))
         class_id_out = model(embedding)  # class_id_out => [N, 10575]
+        # print('class_id_out.size(): ' + str(class_id_out.size()))
 
         # Calculate loss
         loss = criterion(class_id_out, class_id_true)
@@ -170,7 +173,7 @@ def validate(val_loader, encoder, model, criterion):
                                                                                        loss=losses,
                                                                                        top5_accs=top5_accs))
 
-    return losses.avg
+    return losses.avg, top5_accs.avg
 
 
 if __name__ == '__main__':
