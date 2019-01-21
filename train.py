@@ -18,7 +18,7 @@ def main():
         encoder = ArcFaceEncoder()
         encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()), lr=lr)
         model = ArcMarginModel()
-        model_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()), lr=lr)
+        model_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
 
     else:
         checkpoint = torch.load(checkpoint)
