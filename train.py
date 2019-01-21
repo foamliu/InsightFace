@@ -9,7 +9,7 @@ from utils import *
 
 
 def main():
-    global best_loss, epochs_since_improvement, checkpoint, start_epoch, l1_criterion
+    global best_loss, epochs_since_improvement, checkpoint, start_epoch
     best_loss = 100000
     writer = SummaryWriter()
 
@@ -49,24 +49,22 @@ def main():
             adjust_learning_rate(optimizer, 0.1)
 
         # One epoch's training
-        train_loss, train_gen_accs, train_age_mae = train(train_loader=train_loader,
-                                                          model=model,
-                                                          criterion=criterion,
-                                                          optimizer=optimizer,
-                                                          epoch=epoch)
+        train_loss, train_top5_accs = train(train_loader=train_loader,
+                                            model=model,
+                                            criterion=criterion,
+                                            optimizer=optimizer,
+                                            epoch=epoch)
         train_dataset.shuffle()
         writer.add_scalar('Train Loss', train_loss, epoch)
-        writer.add_scalar('Train Gender Accuracy', train_gen_accs, epoch)
-        writer.add_scalar('Train Age MAE', train_age_mae, epoch)
+        writer.add_scalar('Train Top5 Accuracy', train_top5_accs, epoch)
 
         # One epoch's validation
-        valid_loss, valid_gen_accs, valid_age_mae = validate(val_loader=val_loader,
-                                                             model=model,
-                                                             criterion=criterion)
+        valid_loss, valid_top5_accs = validate(val_loader=val_loader,
+                                               model=model,
+                                               criterion=criterion)
 
         writer.add_scalar('Valid Loss', valid_loss, epoch)
-        writer.add_scalar('Valid Gender Accuracy', valid_gen_accs, epoch)
-        writer.add_scalar('Valid Age MAE', valid_age_mae, epoch)
+        writer.add_scalar('Valid Top5 Accuracy', valid_top5_accs, epoch)
 
         # Check if there was an improvement
         is_best = valid_loss < best_loss
@@ -123,7 +121,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
                                                                                    loss=losses,
                                                                                    top5_accs=top5_accs))
 
-    return losses.avg
+    return losses.avg, top5_accs.avg
 
 
 def validate(val_loader, model, criterion):
