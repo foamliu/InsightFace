@@ -16,8 +16,10 @@ def main():
     # Initialize / load checkpoint
     if checkpoint is None:
         encoder = ArcFaceEncoder()
+        encoder = nn.DataParallel(encoder)
         encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()), lr=lr)
         model = ArcMarginModel()
+        model = nn.DataParallel(model)
         model_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
 
     else:
@@ -25,8 +27,10 @@ def main():
         start_epoch = checkpoint['epoch'] + 1
         epochs_since_improvement = checkpoint['epochs_since_improvement']
         encoder = checkpoint['encoder']
+        encoder = nn.DataParallel(encoder)
         encoder_optimizer = checkpoint['encoder_optimizer']
         model = checkpoint['model']
+        model = nn.DataParallel(model)
         model_optimizer = checkpoint['model_optimizer']
 
     # Move to GPU, if available
