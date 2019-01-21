@@ -1,3 +1,4 @@
+import torch.nn.functional as F
 import torchvision
 from torch import nn
 from torchsummary import summary
@@ -20,9 +21,9 @@ data_transforms = {
 }
 
 
-class ArcFaceModel(nn.Module):
+class ArcFaceEmbedder(nn.Module):
     def __init__(self):
-        super(ArcFaceModel, self).__init__()
+        super(ArcFaceEmbedder, self).__init__()
 
         resnet = torchvision.models.resnet50(pretrained=True)
 
@@ -44,6 +45,18 @@ class ArcFaceModel(nn.Module):
         return x
 
 
+class ArcMarginModel(nn.Module):
+    def __init__(self):
+        super(ArcMarginModel, self).__init__()
+
+        self.fc = nn.Linear(embedding_size, num_classes)
+
+    def forward(self, embedding):
+        x = self.fc(embedding)
+        id_out = F.softmax(x, dim=1)
+        return id_out
+
+
 if __name__ == "__main__":
-    model = ArcFaceModel().to(device)
+    model = ArcFaceEmbedder().to(device)
     summary(model, (3, 112, 112))

@@ -4,8 +4,10 @@ image_w = 112
 image_h = 112
 channel = 3
 epochs = 10000
+num_classes = 10575
 s = 64
 m = 0.5
+embedding_size = 512
 
 # Model parameters
 dropout = 0.5
