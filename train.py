@@ -4,7 +4,7 @@ from tensorboardX import SummaryWriter
 from torch import nn
 
 from data_gen import ArcFaceDataset
-from models import ArcFaceEmbedder, ArcMarginModel
+from models import ArcFaceEncoder, ArcMarginModel
 from utils import *
 
 
@@ -15,22 +15,22 @@ def main():
 
     # Initialize / load checkpoint
     if checkpoint is None:
-        embedder = ArcFaceEmbedder()
-        embedder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, embedder.parameters()), lr=lr)
+        encoder = ArcFaceEncoder()
+        encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()), lr=lr)
         model = ArcMarginModel()
-        model_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, embedder.parameters()), lr=lr)
+        model_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()), lr=lr)
 
     else:
         checkpoint = torch.load(checkpoint)
         start_epoch = checkpoint['epoch'] + 1
         epochs_since_improvement = checkpoint['epochs_since_improvement']
-        embedder = checkpoint['embedder']
-        embedder_optimizer = checkpoint['embedder_optimizer']
+        encoder = checkpoint['encoder']
+        encoder_optimizer = checkpoint['encoder_optimizer']
         model = checkpoint['model']
         model_optimizer = checkpoint['model_optimizer']
 
     # Move to GPU, if available
-    embedder = embedder.to(device)
+    encoder = encoder.to(device)
     model = model.to(device)
 
     # Loss function
@@ -51,14 +51,14 @@ def main():
         if epochs_since_improvement == 20:
             break
         if epochs_since_improvement > 0 and epochs_since_improvement % 8 == 0:
-            adjust_learning_rate(embedder_optimizer, 0.1)
+            adjust_learning_rate(encoder_optimizer, 0.1)
 
         # One epoch's training
         train_loss, train_top5_accs = train(train_loader=train_loader,
-                                            embedder=embedder,
+                                            encoder=encoder,
                                             model=model,
                                             criterion=criterion,
-                                            embedder_optimizer=embedder_optimizer,
+                                            encoder_optimizer=encoder_optimizer,
                                             model_optimizer=model_optimizer,
                                             epoch=epoch)
         train_dataset.shuffle()
@@ -67,7 +67,7 @@ def main():
 
         # One epoch's validation
         valid_loss, valid_top5_accs = validate(val_loader=val_loader,
-                                               embedder=embedder,
+                                               embedder=encoder,
                                                model=model,
                                                criterion=criterion)
 
@@ -84,11 +84,12 @@ def main():
             epochs_since_improvement = 0
 
         # Save checkpoint
-        save_checkpoint(epoch, epochs_since_improvement, embedder, embedder_optimizer, best_loss, is_best)
+        save_checkpoint(epoch, epochs_since_improvement, encoder, encoder_optimizer, model, model_optimizer, best_loss,
+                        is_best)
 
 
-def train(train_loader, embedder, model, criterion, embedder_optimizer, model_optimizer, epoch):
-    embedder.train()  # train mode (dropout and batchnorm is used)
+def train(train_loader, encoder, model, criterion, encoder_optimizer, model_optimizer, epoch):
+    encoder.train()  # train mode (dropout and batchnorm is used)
     model.train()
 
     losses = AverageMeter()
@@ -102,23 +103,23 @@ def train(train_loader, embedder, model, criterion, embedder_optimizer, model_op
         class_id_true = class_id_true.to(device)  # [N, 1]
 
         # Forward prop.
-        embedding = embedder(inputs)  # embedding => [N, 512]
+        embedding = encoder(inputs)  # embedding => [N, 512]
         class_id_out = model(embedding)  # class_id_out => [N, 10575]
 
         # Calculate loss
         loss = criterion(class_id_out, class_id_true)
 
         # Back prop.
-        embedder_optimizer.zero_grad()
+        encoder_optimizer.zero_grad()
         model_optimizer.zero_grad()
         loss.backward()
 
         # Clip gradients
-        clip_gradient(embedder_optimizer, grad_clip)
+        clip_gradient(encoder_optimizer, grad_clip)
         clip_gradient(model_optimizer, grad_clip)
 
         # Update weights
-        embedder_optimizer.step()
+        encoder_optimizer.step()
         model_optimizer.step()
 
         # Keep track of metrics
@@ -137,8 +138,8 @@ def train(train_loader, embedder, model, criterion, embedder_optimizer, model_op
     return losses.avg, top5_accs.avg
 
 
-def validate(val_loader, embedder, model, criterion):
-    embedder.eval()  # eval mode (no dropout or batchnorm)
+def validate(val_loader, encoder, model, criterion):
+    encoder.eval()  # eval mode (no dropout or batchnorm)
     model.eval()
 
     losses = AverageMeter()
@@ -153,7 +154,7 @@ def validate(val_loader, embedder, model, criterion):
             class_id_true = class_id_true.to(device)
 
             # Forward prop.
-            embedding = embedder(inputs)  # embedding => [N, 512]
+            embedding = encoder(inputs)  # embedding => [N, 512]
             class_id_out = model(embedding)  # class_id_out => [N, 10575]
 
             # Calculate loss

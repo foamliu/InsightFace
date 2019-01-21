@@ -21,9 +21,9 @@ data_transforms = {
 }
 
 
-class ArcFaceEmbedder(nn.Module):
+class ArcFaceEncoder(nn.Module):
     def __init__(self):
-        super(ArcFaceEmbedder, self).__init__()
+        super(ArcFaceEncoder, self).__init__()
 
         resnet = torchvision.models.resnet50(pretrained=True)
 
@@ -58,5 +58,5 @@ class ArcMarginModel(nn.Module):
 
 
 if __name__ == "__main__":
-    model = ArcFaceEmbedder().to(device)
+    model = ArcFaceEncoder().to(device)
     summary(model, (3, 112, 112))

@@ -1,13 +1,10 @@
-import math
-import os
-from datetime import datetime, timedelta
-
 import cv2 as cv
 import numpy as np
 from torch.nn import L1Loss
 
 from align_faces import get_reference_facial_points, warp_and_crop_face
 from config import *
+
 
 def clip_gradient(optimizer, grad_clip):
     """
@@ -21,12 +18,14 @@ def clip_gradient(optimizer, grad_clip):
                 param.grad.data.clamp_(-grad_clip, grad_clip)
 
 
-def save_checkpoint(epoch, epochs_since_improvement, model, optimizer, loss, is_best):
+def save_checkpoint(epoch, epochs_since_improvement, encoder, encoder_optimizer, model, model_optimizer, loss, is_best):
     state = {'epoch': epoch,
              'epochs_since_improvement': epochs_since_improvement,
              'loss': loss,
+             'encoder': encoder,
+             'encoder_optimizer': encoder_optimizer,
              'model': model,
-             'optimizer': optimizer}
+             'model_optimizer': model_optimizer}
     filename = 'checkpoint_' + '.pth.tar'
     torch.save(state, filename)
     # If this checkpoint is the best so far, store a copy so it doesn't get overwritten by a worse checkpoint
