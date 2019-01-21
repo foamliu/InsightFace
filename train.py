@@ -67,7 +67,7 @@ def main():
 
         # One epoch's validation
         valid_loss, valid_top5_accs = validate(val_loader=val_loader,
-                                               embedder=encoder,
+                                               encoder=encoder,
                                                model=model,
                                                criterion=criterion)
 
