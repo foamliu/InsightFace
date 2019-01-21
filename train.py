@@ -97,7 +97,6 @@ def train(train_loader, encoder, model, criterion, encoder_optimizer, model_opti
 
     # Batches
     for i, (inputs, class_id_true) in enumerate(train_loader):
-        chunk_size = inputs.size()[0]
         # Move to GPU, if available
         inputs = inputs.to(device)
         class_id_true = class_id_true.to(device)  # [N, 1]
@@ -123,9 +122,9 @@ def train(train_loader, encoder, model, criterion, encoder_optimizer, model_opti
         model_optimizer.step()
 
         # Keep track of metrics
-        losses.update(loss.item(), chunk_size)
+        losses.update(loss.item())
         top5_accuracy = accuracy(class_id_out, class_id_true, 5)
-        top5_accs.update(top5_accuracy, chunk_size)
+        top5_accs.update(top5_accuracy)
 
         # Print status
         if i % print_freq == 0:
@@ -148,7 +147,6 @@ def validate(val_loader, encoder, model, criterion):
     with torch.no_grad():
         # Batches
         for i, (inputs, class_id_true) in enumerate(val_loader):
-            chunk_size = inputs.size()[0]
             # Move to GPU, if available
             inputs = inputs.to(device)
             class_id_true = class_id_true.to(device)
@@ -161,9 +159,9 @@ def validate(val_loader, encoder, model, criterion):
             loss = criterion(class_id_out, class_id_true)
 
             # Keep track of metrics
-            losses.update(loss.item(), chunk_size)
+            losses.update(loss.item())
             top5_accuracy = accuracy(class_id_out, class_id_true, 5)
-            top5_accs.update(top5_accuracy, chunk_size)
+            top5_accs.update(top5_accuracy)
 
             if i % print_freq == 0:
                 print('Validation: [{0}/{1}]\t'
