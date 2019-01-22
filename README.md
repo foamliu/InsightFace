@@ -38,6 +38,6 @@ $ tensorboard --logdir=runs
 |验证|![image](https://github.com/foamliu/InsightFace/raw/master/images/valid_loss.png)|![image](https://github.com/foamliu/InsightFace/raw/master/images/valid_acc.png)|
 
 ### 比较
-#|图片大小|网络|损失函数|Loss|批量大小|优化器|权重衰减|s|m|
-|---|---|---|---|---|---|---|---|---|---|
-|1|112x112|ResNet-50|CrossEntropy|4.6201|512|SGD|5e-4|30|0.5|
+#|图片大小|网络|损失函数|Loss|批量大小|优化器|权重衰减|s|m|预训练|
+|---|---|---|---|---|---|---|---|---|---|---|
+|1|112x112|ResNet-50|CrossEntropy|4.6201|512|SGD|5e-4|30|0.5|否|
