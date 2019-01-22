@@ -1,1 +1,5 @@
-.idea
+.idea/
+runs/
+data/
+__pycache__/
+*.tar
