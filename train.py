@@ -22,7 +22,7 @@ def main():
         metric_fc = nn.DataParallel(metric_fc)
 
         optimizer = torch.optim.SGD([{'params': model.parameters()}, {'params': metric_fc.parameters()}], lr=lr,
-                                    weight_decay=weight_decay)
+                                    momentum=0.9, weight_decay=weight_decay)
 
     else:
         checkpoint = torch.load(checkpoint)

@@ -28,7 +28,7 @@ class ArcFaceModel(nn.Module):
     def __init__(self):
         super(ArcFaceModel, self).__init__()
 
-        resnet = torchvision.models.resnet50(pretrained=False)
+        resnet = torchvision.models.resnet50(pretrained=True)
 
         # Remove linear and pool layers (since we're not doing classification)
         modules = list(resnet.children())[:-2]
