@@ -21,8 +21,8 @@ def main():
         metric_fc = ArcMarginModel()
         metric_fc = nn.DataParallel(metric_fc)
 
-        optimizer = torch.optim.Adam([{'params': model.parameters()}, {'params': metric_fc.parameters()}], lr=lr,
-                                     weight_decay=weight_decay)
+        optimizer = torch.optim.SGD([{'params': model.parameters()}, {'params': metric_fc.parameters()}], lr=lr,
+                                    weight_decay=weight_decay)
 
     else:
         checkpoint = torch.load(checkpoint)
@@ -43,10 +43,11 @@ def main():
 
     # Custom dataloaders
     train_dataset = ArcFaceDataset('train')
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers,
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
+                                               num_workers=num_workers,
                                                pin_memory=True)
     val_dataset = ArcFaceDataset('valid')
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=workers,
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                              pin_memory=True)
 
     reduced_20k = reduced_28k = False

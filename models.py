@@ -28,7 +28,7 @@ class ArcFaceModel(nn.Module):
     def __init__(self):
         super(ArcFaceModel, self).__init__()
 
-        resnet = torchvision.models.resnet50(pretrained=True)
+        resnet = torchvision.models.resnet50(pretrained=False)
 
         # Remove linear and pool layers (since we're not doing classification)
         modules = list(resnet.children())[:-2]
@@ -65,12 +65,13 @@ class ArcMarginModel(nn.Module):
         W = F.normalize(self.weight)
         cosine = F.linear(x, W)
         sine = torch.sqrt(1.0 - torch.pow(cosine, 2))
-        phi = cosine * self.cos_m - sine * self.sin_m   # cos(theta + m)
+        phi = cosine * self.cos_m - sine * self.sin_m  # cos(theta + m)
         phi = torch.where(cosine > self.th, phi, cosine - self.mm)
         one_hot = torch.zeros(cosine.size(), device=device)
         one_hot.scatter_(1, label.view(-1, 1).long(), 1)
         output = (one_hot * phi) + ((1.0 - one_hot) * cosine)
         output *= s
+        output = F.softmax(output, dim=1)
         return output
 
 
