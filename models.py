@@ -66,12 +66,11 @@ class ArcMarginModel(nn.Module):
         cosine = F.linear(x, W)
         sine = torch.sqrt(1.0 - torch.pow(cosine, 2))
         phi = cosine * self.cos_m - sine * self.sin_m  # cos(theta + m)
-        phi = torch.where(cosine > self.th, phi, cosine - self.mm)
+        phi = torch.where(cosine > 0, phi, cosine)
         one_hot = torch.zeros(cosine.size(), device=device)
         one_hot.scatter_(1, label.view(-1, 1).long(), 1)
         output = (one_hot * phi) + ((1.0 - one_hot) * cosine)
         output *= s
-        output = F.softmax(output, dim=1)
         return output
 
 
