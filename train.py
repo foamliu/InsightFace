@@ -9,9 +9,10 @@ from utils import *
 
 
 def main():
-    global best_loss, epochs_since_improvement, checkpoint, start_epoch
+    global best_loss, epochs_since_improvement, checkpoint, start_epoch, train_steps
     best_loss = 100000
     writer = SummaryWriter()
+    train_steps = 0
 
     # Initialize / load checkpoint
     if checkpoint is None:
@@ -49,14 +50,23 @@ def main():
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                              pin_memory=True)
 
+    reduced_16k = reduced_24k = reduced_28k = False
+    
     # Epochs
     for epoch in range(start_epoch, epochs):
 
-        # Decay learning rate if there is no improvement for 8 consecutive epochs, and terminate training after 20
-        if epochs_since_improvement == 20:
-            break
-        if epochs_since_improvement > 0 and epochs_since_improvement % 8 == 0:
+        if train_steps >= 16 * 1024 and not reduced_16k:
             adjust_learning_rate(optimizer, 0.1)
+            print('reduced lr at 16k')
+            reduced_16k = True
+        if train_steps >= 24 * 1024 and not reduced_24k:
+            adjust_learning_rate(optimizer, 0.1)
+            print('reduced lr at 24k')
+            reduced_24k = True
+        if train_steps >= 28 * 1024 and not reduced_28k:
+            adjust_learning_rate(optimizer, 0.1)
+            print('reduced lr at 28k')
+            reduced_28k = True
 
         # One epoch's training
         train_loss, train_top5_accs = train(train_loader=train_loader,
