@@ -23,10 +23,16 @@ $ python pre_process.py
 |![image](https://github.com/foamliu/InsightFace/raw/master/images/6_raw.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/6_img.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/7_raw.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/7_img.jpg)|
 |![image](https://github.com/foamliu/InsightFace/raw/master/images/8_raw.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/8_img.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/9_raw.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/9_img.jpg)|
 
-
-
-
 ### 训练
 ```bash
 $ python train.py
 ```
+
+训练过程可视化：
+```bash
+$ tensorboard --logdir=runs
+```
+图 | 损失 | 准确度 |
+|---|---|---|
+|训练|![image](https://github.com/foamliu/InsightFace/raw/master/images/train_loss.png)|![image](https://github.com/foamliu/InsightFace/raw/master/images/train_acc.png)|
+|验证|![image](https://github.com/foamliu/InsightFace/raw/master/images/valid_loss.png)|![image](https://github.com/foamliu/InsightFace/raw/master/images/valid_acc.png)|
