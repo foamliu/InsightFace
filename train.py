@@ -9,18 +9,21 @@ from utils import *
 
 
 def main():
-    global best_loss, epochs_since_improvement, checkpoint, start_epoch
+    global best_loss, epochs_since_improvement, checkpoint, start_epoch, train_steps
     best_loss = 100000
     writer = SummaryWriter()
+    train_steps = 0
 
     # Initialize / load checkpoint
     if checkpoint is None:
         encoder = ArcFaceEncoder()
         encoder = nn.DataParallel(encoder)
-        encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, encoder.parameters()), lr=lr)
+        encoder_optimizer = torch.optim.SGD(params=filter(lambda p: p.requires_grad, encoder.parameters()), lr=lr,
+                                            weight_decay=weight_decay)
         model = ArcMarginModel()
         model = nn.DataParallel(model)
-        model_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
+        model_optimizer = torch.optim.SGD(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr,
+                                          weight_decay=weight_decay)
 
     else:
         checkpoint = torch.load(checkpoint)
@@ -48,14 +51,22 @@ def main():
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=workers,
                                              pin_memory=True)
 
+    reduced_16k = reduced_24k = reduced_28k = False
+
     # Epochs
     for epoch in range(start_epoch, epochs):
-
-        # Decay learning rate if there is no improvement for 8 consecutive epochs, and terminate training after 20
-        if epochs_since_improvement == 20:
-            break
-        if epochs_since_improvement > 0 and epochs_since_improvement % 8 == 0:
+        if train_steps >= 16 * 1024 and not reduced_16k:
             adjust_learning_rate(encoder_optimizer, 0.1)
+            adjust_learning_rate(model_optimizer, 0.1)
+            reduced_16k = True
+        if train_steps >= 24 * 1024 and not reduced_24k:
+            adjust_learning_rate(encoder_optimizer, 0.1)
+            adjust_learning_rate(model_optimizer, 0.1)
+            reduced_24k = True
+        if train_steps >= 28 * 1024 and not reduced_28k:
+            adjust_learning_rate(encoder_optimizer, 0.1)
+            adjust_learning_rate(model_optimizer, 0.1)
+            reduced_28k = True
 
         # One epoch's training
         train_loss, train_top5_accs = train(train_loader=train_loader,
@@ -140,6 +151,8 @@ def train(train_loader, encoder, model, criterion, encoder_optimizer, model_opti
                   'Top5 Accuracy {top5_accs.val:.3f} ({top5_accs.avg:.3f})'.format(epoch, i, len(train_loader),
                                                                                    loss=losses,
                                                                                    top5_accs=top5_accs))
+        global train_steps
+        train_steps += 1
 
     return losses.avg, top5_accs.avg
 
