@@ -51,7 +51,7 @@ def main():
                                              pin_memory=True)
 
     reduced_16k = reduced_24k = reduced_28k = False
-    
+
     # Epochs
     for epoch in range(start_epoch, epochs):
 
@@ -138,6 +138,9 @@ def train(train_loader, model, metric_fc, criterion, optimizer, epoch):
         losses.update(loss.item())
         top5_accuracy = accuracy(output, label, 5)
         top5_accs.update(top5_accuracy)
+
+        global train_steps
+        train_steps += 1
 
         # Print status
         if i % print_freq == 0:
