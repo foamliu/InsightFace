@@ -16,29 +16,27 @@ def main():
 
     # Initialize / load checkpoint
     if checkpoint is None:
-        encoder = ArcFaceEncoder()
-        encoder = nn.DataParallel(encoder)
-        encoder_optimizer = torch.optim.SGD(params=filter(lambda p: p.requires_grad, encoder.parameters()), lr=lr,
-                                            momentum=0.9, weight_decay=weight_decay)
-        model = ArcMarginModel()
+        model = ArcFaceEncoder()
         model = nn.DataParallel(model)
-        model_optimizer = torch.optim.SGD(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr,
-                                          momentum=0.9, weight_decay=weight_decay)
+        metric_fc = ArcMarginModel()
+        metric_fc = nn.DataParallel(metric_fc)
+
+        optimizer = torch.optim.Adam([{'params': model.parameters()}, {'params': metric_fc.parameters()}], lr=lr,
+                                     weight_decay=weight_decay)
 
     else:
         checkpoint = torch.load(checkpoint)
         start_epoch = checkpoint['epoch'] + 1
         epochs_since_improvement = checkpoint['epochs_since_improvement']
-        encoder = checkpoint['encoder']
-        encoder = nn.DataParallel(encoder)
-        encoder_optimizer = checkpoint['encoder_optimizer']
         model = checkpoint['model']
         model = nn.DataParallel(model)
-        model_optimizer = checkpoint['model_optimizer']
+        metric_fc = checkpoint['metric_fc']
+        metric_fc = nn.DataParallel(metric_fc)
+        optimizer = checkpoint['optimizer']
 
     # Move to GPU, if available
-    encoder = encoder.to(device)
     model = model.to(device)
+    metric_fc = metric_fc.to(device)
 
     # Loss function
     criterion = nn.CrossEntropyLoss().to(device)
@@ -56,23 +54,20 @@ def main():
     # Epochs
     for epoch in range(start_epoch, epochs):
         if train_steps >= 20 * 1024 and not reduced_20k:
-            adjust_learning_rate(encoder_optimizer, 0.1)
-            adjust_learning_rate(model_optimizer, 0.1)
+            adjust_learning_rate(optimizer, 0.1)
             print('reduced lr at 20k')
             reduced_20k = True
         if train_steps >= 28 * 1024 and not reduced_28k:
-            adjust_learning_rate(encoder_optimizer, 0.1)
-            adjust_learning_rate(model_optimizer, 0.1)
+            adjust_learning_rate(optimizer, 0.1)
             print('reduced lr at 28k')
             reduced_28k = True
 
         # One epoch's training
         train_loss, train_top5_accs = train(train_loader=train_loader,
-                                            encoder=encoder,
                                             model=model,
+                                            metric_fc=metric_fc,
                                             criterion=criterion,
-                                            encoder_optimizer=encoder_optimizer,
-                                            model_optimizer=model_optimizer,
+                                            optimizer=optimizer,
                                             epoch=epoch)
         train_dataset.shuffle()
         writer.add_scalar('Train Loss', train_loss, epoch)
@@ -80,8 +75,8 @@ def main():
 
         # One epoch's validation
         valid_loss, valid_top5_accs = validate(val_loader=val_loader,
-                                               encoder=encoder,
                                                model=model,
+                                               metric_fc=metric_fc,
                                                criterion=criterion)
 
         writer.add_scalar('Valid Loss', valid_loss, epoch)
@@ -97,13 +92,12 @@ def main():
             epochs_since_improvement = 0
 
         # Save checkpoint
-        save_checkpoint(epoch, epochs_since_improvement, encoder, encoder_optimizer, model, model_optimizer, best_loss,
-                        is_best)
+        save_checkpoint(epoch, epochs_since_improvement, model, metric_fc, optimizer, best_loss, is_best)
 
 
-def train(train_loader, encoder, model, criterion, encoder_optimizer, model_optimizer, epoch):
-    encoder.train()  # train mode (dropout and batchnorm is used)
-    model.train()
+def train(train_loader, model, metric_fc, criterion, optimizer, epoch):
+    model.train()  # train mode (dropout and batchnorm is used)
+    metric_fc.train()
 
     losses = AverageMeter()
     top5_accs = AverageMeter()
@@ -116,26 +110,23 @@ def train(train_loader, encoder, model, criterion, encoder_optimizer, model_opti
         # print('class_id_true.size(): ' + str(class_id_true.size()))
 
         # Forward prop.
-        input = encoder(img)  # embedding => [N, 512]
+        feature = model(img)  # embedding => [N, 512]
         # print('embedding.size(): ' + str(embedding.size()))
-        pred = model(input, label)  # class_id_out => [N, 10575]
+        pred = metric_fc(feature, label)  # class_id_out => [N, 10575]
         # print('class_id_out.size(): ' + str(class_id_out.size()))
 
         # Calculate loss
         loss = criterion(pred, label)
 
         # Back prop.
-        encoder_optimizer.zero_grad()
-        model_optimizer.zero_grad()
+        optimizer.zero_grad()
         loss.backward()
 
         # Clip gradients
-        clip_gradient(encoder_optimizer, grad_clip)
-        clip_gradient(model_optimizer, grad_clip)
+        clip_gradient(optimizer, grad_clip)
 
         # Update weights
-        encoder_optimizer.step()
-        model_optimizer.step()
+        optimizer.step()
 
         # Keep track of metrics
         losses.update(loss.item())
@@ -155,9 +146,9 @@ def train(train_loader, encoder, model, criterion, encoder_optimizer, model_opti
     return losses.avg, top5_accs.avg
 
 
-def validate(val_loader, encoder, model, criterion):
-    encoder.eval()  # eval mode (no dropout or batchnorm)
-    model.eval()
+def validate(val_loader, model, metric_fc, criterion):
+    model.eval()  # eval mode (no dropout or batchnorm)
+    metric_fc.eval()
 
     losses = AverageMeter()
     top5_accs = AverageMeter()
@@ -170,8 +161,8 @@ def validate(val_loader, encoder, model, criterion):
             label = label.to(device)
 
             # Forward prop.
-            input = encoder(img)  # embedding => [N, 512]
-            pred = model(input, label)  # class_id_out => [N, 10575]
+            feature = model(img)  # embedding => [N, 512]
+            pred = metric_fc(feature, label)  # class_id_out => [N, 10575]
 
             # Calculate loss
             loss = criterion(pred, label)
