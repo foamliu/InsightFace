@@ -9,10 +9,9 @@ from utils import *
 
 
 def main():
-    global best_loss, epochs_since_improvement, checkpoint, start_epoch, train_steps
+    global best_loss, epochs_since_improvement, checkpoint, start_epoch
     best_loss = 100000
     writer = SummaryWriter()
-    train_steps = 0
 
     # Initialize / load checkpoint
     if checkpoint is None:
@@ -50,18 +49,14 @@ def main():
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                              pin_memory=True)
 
-    reduced_20k = reduced_28k = False
-
     # Epochs
     for epoch in range(start_epoch, epochs):
-        if train_steps >= 20 * 1024 and not reduced_20k:
+
+        # Decay learning rate if there is no improvement for 8 consecutive epochs, and terminate training after 20
+        if epochs_since_improvement == 20:
+            break
+        if epochs_since_improvement > 0 and epochs_since_improvement % 8 == 0:
             adjust_learning_rate(optimizer, 0.1)
-            print('reduced lr at 20k')
-            reduced_20k = True
-        if train_steps >= 28 * 1024 and not reduced_28k:
-            adjust_learning_rate(optimizer, 0.1)
-            print('reduced lr at 28k')
-            reduced_28k = True
 
         # One epoch's training
         train_loss, train_top5_accs = train(train_loader=train_loader,
@@ -113,11 +108,11 @@ def train(train_loader, model, metric_fc, criterion, optimizer, epoch):
         # Forward prop.
         feature = model(img)  # embedding => [N, 512]
         # print('embedding.size(): ' + str(embedding.size()))
-        pred = metric_fc(feature, label)  # class_id_out => [N, 10575]
+        output = metric_fc(feature, label)  # class_id_out => [N, 10575]
         # print('class_id_out.size(): ' + str(class_id_out.size()))
 
         # Calculate loss
-        loss = criterion(pred, label)
+        loss = criterion(output, label)
 
         # Back prop.
         optimizer.zero_grad()
@@ -131,7 +126,7 @@ def train(train_loader, model, metric_fc, criterion, optimizer, epoch):
 
         # Keep track of metrics
         losses.update(loss.item())
-        top5_accuracy = accuracy(pred, label, 5)
+        top5_accuracy = accuracy(output, label, 5)
         top5_accs.update(top5_accuracy)
 
         # Print status
@@ -141,8 +136,6 @@ def train(train_loader, model, metric_fc, criterion, optimizer, epoch):
                   'Top5 Accuracy {top5_accs.val:.3f} ({top5_accs.avg:.3f})'.format(epoch, i, len(train_loader),
                                                                                    loss=losses,
                                                                                    top5_accs=top5_accs))
-        global train_steps
-        train_steps += 1
 
     return losses.avg, top5_accs.avg
 
@@ -163,14 +156,14 @@ def validate(val_loader, model, metric_fc, criterion):
 
             # Forward prop.
             feature = model(img)  # embedding => [N, 512]
-            pred = metric_fc(feature, label)  # class_id_out => [N, 10575]
+            output = metric_fc(feature, label)  # class_id_out => [N, 10575]
 
             # Calculate loss
-            loss = criterion(pred, label)
+            loss = criterion(output, label)
 
             # Keep track of metrics
             losses.update(loss.item())
-            top5_accuracy = accuracy(pred, label, 5)
+            top5_accuracy = accuracy(output, label, 5)
             top5_accs.update(top5_accuracy)
 
             if i % print_freq == 0:
