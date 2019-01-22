@@ -9,10 +9,11 @@ from utils import *
 
 
 def main():
-    global best_loss, epochs_since_improvement, checkpoint, start_epoch, train_steps
+    global checkpoint, start_epoch, train_steps
     best_loss = 100000
     writer = SummaryWriter()
     train_steps = 0
+    epochs_since_improvement = 0
 
     # Initialize / load checkpoint
     if checkpoint is None:
