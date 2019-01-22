@@ -36,6 +36,7 @@ class ArcFaceDataset(Dataset):
         img = align_face(full_path, landmarks)
         img = transforms.ToPILImage()(img)
         img = self.transformer(img)
+
         class_id = sample['class_id']
         return img, class_id
 
