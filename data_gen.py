@@ -35,6 +35,7 @@ class ArcFaceDataset(Dataset):
         img = align_face(full_path, landmarks)
         # img = transforms.ToPILImage()(img)
         # img = self.transformer(img)
+        img = img.transpose(2, 0, 1)
         img = (img - 127.5) / 128
 
         class_id = sample['class_id']
