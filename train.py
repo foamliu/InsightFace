@@ -58,14 +58,17 @@ def main():
         if train_steps >= 16 * 1024 and not reduced_16k:
             adjust_learning_rate(encoder_optimizer, 0.1)
             adjust_learning_rate(model_optimizer, 0.1)
+            print('reduced lr at 16k')
             reduced_16k = True
         if train_steps >= 24 * 1024 and not reduced_24k:
             adjust_learning_rate(encoder_optimizer, 0.1)
             adjust_learning_rate(model_optimizer, 0.1)
+            print('reduced lr at 24k')
             reduced_24k = True
         if train_steps >= 28 * 1024 and not reduced_28k:
             adjust_learning_rate(encoder_optimizer, 0.1)
             adjust_learning_rate(model_optimizer, 0.1)
+            print('reduced lr at 28k')
             reduced_28k = True
 
         # One epoch's training
