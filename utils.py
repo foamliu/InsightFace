@@ -25,11 +25,11 @@ def save_checkpoint(epoch, epochs_since_improvement, encoder, encoder_optimizer,
              'encoder_optimizer': encoder_optimizer,
              'model': model,
              'model_optimizer': model_optimizer}
-    filename = 'checkpoint_' + '.pth.tar'
+    filename = 'checkpoint_' + str(epoch) + '_' + str(loss) + '.tar'
     torch.save(state, filename)
     # If this checkpoint is the best so far, store a copy so it doesn't get overwritten by a worse checkpoint
     if is_best:
-        torch.save(state, 'BEST_' + filename)
+        torch.save(state, 'BEST_checkpoint.tar')
 
 
 class AverageMeter(object):
