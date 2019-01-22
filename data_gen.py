@@ -4,10 +4,9 @@ import random
 import cv2 as cv
 import numpy as np
 from torch.utils.data import Dataset
-from torchvision import transforms
 
 from config import *
-from models import data_transforms
+# from models import data_transforms
 from utils import align_face
 
 
@@ -23,19 +22,20 @@ class ArcFaceDataset(Dataset):
 
         if split == 'train':
             self.samples = samples[:num_train]
-            self.transformer = data_transforms['train']
+            # self.transformer = data_transforms['train']
 
         else:
             self.samples = samples[num_train:]
-            self.transformer = data_transforms['val']
+            # self.transformer = data_transforms['val']
 
     def __getitem__(self, i):
         sample = self.samples[i]
         full_path = sample['full_path']
         landmarks = sample['landmarks']
         img = align_face(full_path, landmarks)
-        img = transforms.ToPILImage()(img)
-        img = self.transformer(img)
+        # img = transforms.ToPILImage()(img)
+        # img = self.transformer(img)
+        img = (img - 127.5) / 128
 
         class_id = sample['class_id']
         return img, class_id
