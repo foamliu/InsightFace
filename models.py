@@ -24,9 +24,9 @@ data_transforms = {
 }
 
 
-class ArcFaceEncoder(nn.Module):
+class ArcFaceModel(nn.Module):
     def __init__(self):
-        super(ArcFaceEncoder, self).__init__()
+        super(ArcFaceModel, self).__init__()
 
         resnet = torchvision.models.resnet50(pretrained=True)
 
@@ -35,8 +35,8 @@ class ArcFaceEncoder(nn.Module):
         self.resnet = nn.Sequential(*modules)
         self.bn1 = nn.BatchNorm2d(2048)
         self.dropout = nn.Dropout()
-        self.fc = nn.Linear(2048 * 4 * 4, 512)
-        self.bn2 = nn.BatchNorm1d(512)
+        self.fc = nn.Linear(2048 * 4 * 4, embedding_size)
+        self.bn2 = nn.BatchNorm1d(embedding_size)
 
     def forward(self, images):
         x = self.resnet(images)  # [N, 512, 4, 4]
@@ -61,17 +61,20 @@ class ArcMarginModel(nn.Module):
         self.mm = math.sin(math.pi - m) * m
 
     def forward(self, input, label):
-        cosine = F.linear(F.normalize(input), F.normalize(self.weight))
+        x = F.normalize(input)
+        W = F.normalize(self.weight)
+        cosine = F.linear(x, W)
         sine = torch.sqrt(1.0 - torch.pow(cosine, 2))
-        phi = cosine * self.cos_m - sine * self.sin_m
+        phi = cosine * self.cos_m - sine * self.sin_m   # cos(theta + m)
         phi = torch.where(cosine > self.th, phi, cosine - self.mm)
         one_hot = torch.zeros(cosine.size(), device=device)
         one_hot.scatter_(1, label.view(-1, 1).long(), 1)
         output = (one_hot * phi) + ((1.0 - one_hot) * cosine)
         output *= s
+        output = F.softmax(output, dim=1)
         return output
 
 
 if __name__ == "__main__":
-    model = ArcFaceEncoder().to(device)
+    model = ArcFaceModel().to(device)
     summary(model, (3, 112, 112))

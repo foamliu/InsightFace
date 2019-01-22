@@ -4,7 +4,7 @@ from tensorboardX import SummaryWriter
 from torch import nn
 
 from data_gen import ArcFaceDataset
-from models import ArcFaceEncoder, ArcMarginModel
+from models import ArcFaceModel, ArcMarginModel
 from utils import *
 
 
@@ -16,7 +16,7 @@ def main():
 
     # Initialize / load checkpoint
     if checkpoint is None:
-        model = ArcFaceEncoder()
+        model = ArcFaceModel()
         model = nn.DataParallel(model)
         metric_fc = ArcMarginModel()
         metric_fc = nn.DataParallel(metric_fc)
