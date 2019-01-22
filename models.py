@@ -1,6 +1,9 @@
+import math
+
 import torch.nn.functional as F
 import torchvision
 from torch import nn
+from torch.nn import Parameter
 from torchsummary import summary
 from torchvision import transforms
 
@@ -49,12 +52,25 @@ class ArcMarginModel(nn.Module):
     def __init__(self):
         super(ArcMarginModel, self).__init__()
 
-        self.fc = nn.Linear(embedding_size, num_classes)
+        self.weight = Parameter(torch.FloatTensor(num_classes, embedding_size))
+        nn.init.xavier_uniform_(self.weight)
 
-    def forward(self, embedding):
-        x = self.fc(embedding)
-        id_out = F.softmax(x, dim=1)
-        return id_out
+        self.cos_m = math.cos(m)
+        self.sin_m = math.sin(m)
+        self.th = math.cos(math.pi - m)
+        self.mm = math.sin(math.pi - m) * m
+
+    def forward(self, input, label):
+        cosine = F.linear(F.normalize(input), F.normalize(self.weight))
+        sine = torch.sqrt(1.0 - torch.pow(cosine, 2))
+        phi = cosine * self.cos_m - sine * self.sin_m
+        phi = torch.where(cosine > self.th, phi, cosine - self.mm)
+        one_hot = torch.zeros(cosine.size(), device=device)
+        one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+        one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+        output = (one_hot * phi) + ((1.0 - one_hot) * cosine)
+        output *= s
+        return output
 
 
 if __name__ == "__main__":

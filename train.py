@@ -19,11 +19,11 @@ def main():
         encoder = ArcFaceEncoder()
         encoder = nn.DataParallel(encoder)
         encoder_optimizer = torch.optim.SGD(params=filter(lambda p: p.requires_grad, encoder.parameters()), lr=lr,
-                                            weight_decay=weight_decay)
+                                            momentum=0.9, weight_decay=weight_decay)
         model = ArcMarginModel()
         model = nn.DataParallel(model)
         model_optimizer = torch.optim.SGD(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr,
-                                          weight_decay=weight_decay)
+                                          momentum=0.9, weight_decay=weight_decay)
 
     else:
         checkpoint = torch.load(checkpoint)
@@ -51,20 +51,15 @@ def main():
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=workers,
                                              pin_memory=True)
 
-    reduced_16k = reduced_24k = reduced_28k = False
+    reduced_20k = reduced_28k = False
 
     # Epochs
     for epoch in range(start_epoch, epochs):
-        if train_steps >= 16 * 1024 and not reduced_16k:
+        if train_steps >= 20 * 1024 and not reduced_20k:
             adjust_learning_rate(encoder_optimizer, 0.1)
             adjust_learning_rate(model_optimizer, 0.1)
-            print('reduced lr at 16k')
-            reduced_16k = True
-        if train_steps >= 24 * 1024 and not reduced_24k:
-            adjust_learning_rate(encoder_optimizer, 0.1)
-            adjust_learning_rate(model_optimizer, 0.1)
-            print('reduced lr at 24k')
-            reduced_24k = True
+            print('reduced lr at 20k')
+            reduced_20k = True
         if train_steps >= 28 * 1024 and not reduced_28k:
             adjust_learning_rate(encoder_optimizer, 0.1)
             adjust_learning_rate(model_optimizer, 0.1)
@@ -114,20 +109,20 @@ def train(train_loader, encoder, model, criterion, encoder_optimizer, model_opti
     top5_accs = AverageMeter()
 
     # Batches
-    for i, (inputs, class_id_true) in enumerate(train_loader):
+    for i, (img, label) in enumerate(train_loader):
         # Move to GPU, if available
-        inputs = inputs.to(device)
-        class_id_true = class_id_true.to(device)  # [N, 1]
+        img = img.to(device)
+        label = label.to(device)  # [N, 1]
         # print('class_id_true.size(): ' + str(class_id_true.size()))
 
         # Forward prop.
-        embedding = encoder(inputs)  # embedding => [N, 512]
+        input = encoder(img)  # embedding => [N, 512]
         # print('embedding.size(): ' + str(embedding.size()))
-        class_id_out = model(embedding)  # class_id_out => [N, 10575]
+        pred = model(input, label)  # class_id_out => [N, 10575]
         # print('class_id_out.size(): ' + str(class_id_out.size()))
 
         # Calculate loss
-        loss = criterion(class_id_out, class_id_true)
+        loss = criterion(pred, label)
 
         # Back prop.
         encoder_optimizer.zero_grad()
@@ -144,7 +139,7 @@ def train(train_loader, encoder, model, criterion, encoder_optimizer, model_opti
 
         # Keep track of metrics
         losses.update(loss.item())
-        top5_accuracy = accuracy(class_id_out, class_id_true, 5)
+        top5_accuracy = accuracy(pred, label, 5)
         top5_accs.update(top5_accuracy)
 
         # Print status
@@ -169,21 +164,21 @@ def validate(val_loader, encoder, model, criterion):
 
     with torch.no_grad():
         # Batches
-        for i, (inputs, class_id_true) in enumerate(val_loader):
+        for i, (img, label) in enumerate(val_loader):
             # Move to GPU, if available
-            inputs = inputs.to(device)
-            class_id_true = class_id_true.to(device)
+            img = img.to(device)
+            label = label.to(device)
 
             # Forward prop.
-            embedding = encoder(inputs)  # embedding => [N, 512]
-            class_id_out = model(embedding)  # class_id_out => [N, 10575]
+            input = encoder(img)  # embedding => [N, 512]
+            pred = model(input, label)  # class_id_out => [N, 10575]
 
             # Calculate loss
-            loss = criterion(class_id_out, class_id_true)
+            loss = criterion(pred, label)
 
             # Keep track of metrics
             losses.update(loss.item())
-            top5_accuracy = accuracy(class_id_out, class_id_true, 5)
+            top5_accuracy = accuracy(pred, label, 5)
             top5_accs.update(top5_accuracy)
 
             if i % print_freq == 0:
