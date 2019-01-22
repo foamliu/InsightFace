@@ -7,16 +7,16 @@ image_w = 112
 image_h = 112
 channel = 3
 num_classes = 10575
-s = 64
-m = 0.5
-embedding_size = 5
+s = 30
+m = 0.35
+embedding_size = 512
 dropout = 0.5
 
 # Training parameters
 start_epoch = 0
 epochs = 10000  # number of epochs to train for (if early stopping is not triggered)
 epochs_since_improvement = 0  # keeps track of number of epochs since there's been an improvement in validation BLEU
-batch_size = 2
+batch_size = 128
 lr = 0.1  # learning rate
 weight_decay = 5e-4
 train_split = 0.9
