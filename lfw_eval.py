@@ -3,17 +3,17 @@ import os
 import pickle
 import tarfile
 
+import cv2 as cv
 import numpy as np
 from torchvision import transforms
 from tqdm import tqdm
 
 from config import *
 from models import data_transforms
-from utils import align_face, get_face_attributes
+from utils import align_face, get_face_all_attributes, draw_bboxes
 
 
 def extract(filename):
-    print('Extracting {}...'.format(filename))
     with tarfile.open(filename, 'r') as tar:
         tar.extractall('data')
 
@@ -39,10 +39,12 @@ def process():
         filename = item['filename']
         class_id = item['class_id']
         sub = item['subject']
-        is_valid, landmarks = get_face_attributes(filename)
+        is_valid, bounding_boxes, landmarks = get_face_all_attributes(filename)
+
         if is_valid:
             samples.append(
-                {'class_id': class_id, 'subject': sub, 'full_path': filename, 'landmarks': landmarks})
+                {'class_id': class_id, 'subject': sub, 'full_path': filename, 'bounding_boxes': bounding_boxes,
+                 'landmarks': landmarks})
 
     with open(pickle_file, 'wb') as file:
         save = {
@@ -144,12 +146,31 @@ def visualize(angles_file):
     print('error rate: {}%'.format(100 - wrong / 6000 * 100))
 
 
+def show_bboxes(folder):
+    with open(pickle_file, 'rb') as file:
+        data = pickle.load(file)
+
+    samples = data['samples']
+    for sample in samples:
+        full_path = sample['full_path']
+        bounding_boxes = sample['bounding_boxes']
+        landmarks = sample['landmarks']
+        img = cv.imread(full_path)
+        img = draw_bboxes(img, bounding_boxes, landmarks)
+        filename = os.path.basename(full_path)
+        filename = os.path.join(folder, filename)
+        cv.imwrite(filename, img)
+
+
 if __name__ == "__main__":
+    filename = 'data/lfw-funneled.tgz'
     if not os.path.isdir('data/lfw_funneled'):
-        extract('data/lfw-funneled.tgz')
+        print('Extracting {}...'.format(filename))
+        extract(filename)
 
     pickle_file = 'data/lfw_funneled.pkl'
     if not os.path.isfile(pickle_file):
+        print('Processing {}...'.format(pickle_file))
         process()
     else:
         with open(pickle_file, 'rb') as file:
@@ -167,6 +188,13 @@ if __name__ == "__main__":
 
     angles_file = 'data/angles.txt'
     if not os.path.isfile(angles_file):
+        print('Evaluating {}...'.format(angles_file))
         evaluate()
 
+    print('Visualizing {}...'.format(angles_file))
     visualize(angles_file)
+
+    folder = 'data/lfw_with_bboxes'
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
+    show_bboxes(folder)
