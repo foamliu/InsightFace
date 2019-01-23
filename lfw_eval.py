@@ -118,6 +118,19 @@ if __name__ == "__main__":
     pickle_file = 'data/lfw_funneled.pkl'
     if not os.path.isfile(pickle_file):
         process()
+    else:
+        with open(pickle_file, 'rb') as file:
+            data = pickle.load(file)
+
+        lines = []
+        samples = data['samples']
+        for sample in samples:
+            line = sample['full_path'] + '\n'
+            line.replace('\\', '/')
+            lines.append(line)
+
+        with open('data/full_path.txt', 'w') as file:
+            file.writelines(lines)
 
     angles_file = 'data/angles.txt'
     if not os.path.isfile(angles_file):
