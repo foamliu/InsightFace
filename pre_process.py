@@ -3,11 +3,10 @@ import pickle
 import zipfile
 
 import numpy as np
-from PIL import Image
 from tqdm import tqdm
 
 from config import *
-from mtcnn.detector import detect_faces
+from utils import get_face_attributes
 
 
 def extract(filename):
@@ -15,22 +14,6 @@ def extract(filename):
     zip_ref = zipfile.ZipFile(filename, 'r')
     zip_ref.extractall('data')
     zip_ref.close()
-
-
-def get_face_attributes(full_path):
-    try:
-        img = Image.open(full_path).convert('RGB')
-        bounding_boxes, landmarks = detect_faces(img)
-
-        if len(landmarks) == 1:
-            landmarks = [int(round(x)) for x in landmarks[0]]
-            return True, landmarks
-
-    except KeyboardInterrupt:
-        raise
-    except:
-        pass
-    return False, None
 
 
 if __name__ == "__main__":

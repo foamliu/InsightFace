@@ -3,8 +3,8 @@ import numpy as np
 
 from align_faces import get_reference_facial_points, warp_and_crop_face
 from config import *
-
-
+from mtcnn.detector import detect_faces
+from PIL import Image
 def clip_gradient(optimizer, grad_clip):
     """
     Clips gradients computed during backpropagation to avoid explosion of gradients.
@@ -92,3 +92,19 @@ def align_face(img_fn, facial5points):
     # dst_img = warp_and_crop_face(raw, facial5points)
     dst_img = warp_and_crop_face(raw, facial5points, reference_pts=reference_5pts, crop_size=crop_size)
     return dst_img
+
+
+def get_face_attributes(full_path):
+    try:
+        img = Image.open(full_path).convert('RGB')
+        bounding_boxes, landmarks = detect_faces(img)
+
+        if len(landmarks) == 1:
+            landmarks = [int(round(x)) for x in landmarks[0]]
+            return True, landmarks
+
+    except KeyboardInterrupt:
+        raise
+    except:
+        pass
+    return False, None

@@ -41,3 +41,19 @@ $ tensorboard --logdir=runs
 #|图片大小|网络|损失函数|Loss|批量大小|优化器|权重衰减|s|m|预训练|
 |---|---|---|---|---|---|---|---|---|---|---|
 |1|112x112|ResNet-50|CrossEntropy|4.6201|512|SGD|5e-4|30|0.5|否|
+
+## 性能评估
+
+### LFW
+使用 Labeled Faces in the Wild (LFW) 数据集做性能评估:
+
+- 13233 人脸图片
+- 5749 人物身份
+- 1680 人有两张以上照片
+### 准备数据
+下载 LFW database 放在 data 目录下:
+```bash
+$ wget http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz
+$ wget http://vis-www.cs.umass.edu/lfw/pairs.txt
+$ wget http://vis-www.cs.umass.edu/lfw/people.txt
+```
