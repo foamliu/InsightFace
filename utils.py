@@ -1,10 +1,12 @@
 import cv2 as cv
 import numpy as np
+from PIL import Image
 
 from align_faces import get_reference_facial_points, warp_and_crop_face
 from config import *
 from mtcnn.detector import detect_faces
-from PIL import Image
+
+
 def clip_gradient(optimizer, grad_clip):
     """
     Clips gradients computed during backpropagation to avoid explosion of gradients.
@@ -99,7 +101,7 @@ def get_face_attributes(full_path):
         img = Image.open(full_path).convert('RGB')
         bounding_boxes, landmarks = detect_faces(img)
 
-        if len(landmarks) == 1:
+        if len(landmarks) > 0:
             landmarks = [int(round(x)) for x in landmarks[0]]
             return True, landmarks
 

@@ -105,10 +105,43 @@ def evaluate():
             theta = math.acos(cosine)
             theta = theta * 180 / math.pi
             is_same = tokens[2]
-            angles.append('{} {}'.format(theta, is_same))
+            angles.append('{} {}\n'.format(theta, is_same))
 
     with open('data/angles.txt', 'w') as file:
         file.writelines(angles)
+
+
+def visualize(angles_file):
+    with open(angles_file) as file:
+        lines = file.readlines()
+
+    ones = []
+    zeros = []
+    wrong = 0
+    for line in lines:
+        tokens = line.split()
+        angle = float(tokens[0])
+        type = int(tokens[1])
+        if type == 1:
+            ones.append(angle)
+            if angle > 75:
+                wrong += 1
+        else:
+            zeros.append(angle)
+            if angle <= 75:
+                wrong += 1
+
+    import numpy
+    from matplotlib import pyplot
+
+    bins = numpy.linspace(0, 180, 181)
+
+    pyplot.hist(zeros, bins, alpha=0.5, label='0')
+    pyplot.hist(ones, bins, alpha=0.5, label='1')
+    pyplot.legend(loc='upper right')
+    pyplot.show()
+
+    print('error rate: {}%'.format(100 - wrong / 6000 * 100))
 
 
 if __name__ == "__main__":
@@ -135,3 +168,5 @@ if __name__ == "__main__":
     angles_file = 'data/angles.txt'
     if not os.path.isfile(angles_file):
         evaluate()
+
+    visualize(angles_file)
