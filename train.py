@@ -54,8 +54,8 @@ def main():
     # Epochs
     for epoch in range(start_epoch, max_epoch):
 
-        if epochs_since_improvement > 0:
-            adjust_learning_rate(optimizer, 0.95)
+        if epoch > 10:
+            adjust_learning_rate(optimizer, 0.85)
 
         # One epoch's training
         train_loss, train_top5_accs = train(train_loader=train_loader,
