@@ -51,23 +51,11 @@ def main():
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                              pin_memory=True)
 
-    reduced_16k = reduced_24k = reduced_28k = False
-
     # Epochs
     for epoch in range(start_epoch, max_epoch):
 
-        if train_steps >= 16 * 1024 and not reduced_16k:
-            adjust_learning_rate(optimizer, 0.1)
-            print('reduced lr at 16k')
-            reduced_16k = True
-        if train_steps >= 24 * 1024 and not reduced_24k:
-            adjust_learning_rate(optimizer, 0.1)
-            print('reduced lr at 24k')
-            reduced_24k = True
-        if train_steps >= 28 * 1024 and not reduced_28k:
-            adjust_learning_rate(optimizer, 0.1)
-            print('reduced lr at 28k')
-            reduced_28k = True
+        if epochs_since_improvement > 0:
+            adjust_learning_rate(optimizer, 0.95)
 
         # One epoch's training
         train_loss, train_top5_accs = train(train_loader=train_loader,

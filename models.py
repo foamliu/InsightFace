@@ -71,6 +71,7 @@ class ArcMarginModel(nn.Module):
         one_hot.scatter_(1, label.view(-1, 1).long(), 1)
         output = (one_hot * phi) + ((1.0 - one_hot) * cosine)
         output *= s
+        output = F.softmax(output, dim=1)
         return output
 
 
