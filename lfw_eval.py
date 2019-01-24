@@ -179,6 +179,9 @@ def error_analysis(threshold):
         if angle > threshold and type == 1:
             fn.append(i)
 
+    print('len(fp): ' + str(len(fp)))
+    print('len(fn): ' + str(len(fn)))
+
     fp_list = random.sample(fp, 10)
     fn_list = random.sample(fn, 10)
 
