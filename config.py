@@ -14,9 +14,9 @@ dropout = 0.4
 
 # Training parameters
 start_epoch = 0
-epochs = 10000  # number of epochs to train for (if early stopping is not triggered)
+max_epoch = 50  # number of epochs to train for (if early stopping is not triggered)
 epochs_since_improvement = 0  # keeps track of number of epochs since there's been an improvement in validation BLEU
-batch_size = 512
+batch_size = 256
 lr = 0.1  # learning rate
 weight_decay = 5e-4
 train_split = 0.9

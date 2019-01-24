@@ -54,7 +54,7 @@ def main():
     reduced_16k = reduced_24k = reduced_28k = False
 
     # Epochs
-    for epoch in range(start_epoch, epochs):
+    for epoch in range(start_epoch, max_epoch):
 
         if train_steps >= 16 * 1024 and not reduced_16k:
             adjust_learning_rate(optimizer, 0.1)
