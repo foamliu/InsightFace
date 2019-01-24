@@ -133,7 +133,6 @@ def draw_bboxes(img, bounding_boxes, facial_landmarks=[]):
 
     for p in facial_landmarks:
         for i in range(5):
-            print(p)
             cv.circle(img, (int(p[i]), int(p[i + 5])), 1, (0, 255, 0), -1)
 
         break  # only first

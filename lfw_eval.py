@@ -143,7 +143,7 @@ def visualize(angles_file):
     pyplot.legend(loc='upper right')
     pyplot.show()
 
-    print('error rate: {}%'.format(100 - wrong / 6000 * 100))
+    print('Accuracy: {}%'.format(100 - wrong / 6000 * 100))
 
 
 def show_bboxes(folder):
@@ -151,7 +151,7 @@ def show_bboxes(folder):
         data = pickle.load(file)
 
     samples = data['samples']
-    for sample in samples:
+    for sample in tqdm(samples):
         full_path = sample['full_path']
         bounding_boxes = sample['bounding_boxes']
         landmarks = sample['landmarks']
@@ -197,4 +197,5 @@ if __name__ == "__main__":
     folder = 'data/lfw_with_bboxes'
     if not os.path.isdir(folder):
         os.mkdir(folder)
+    print('Drawing boxes...')
     show_bboxes(folder)
