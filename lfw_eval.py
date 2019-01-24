@@ -6,12 +6,16 @@ import tarfile
 
 import cv2 as cv
 import numpy as np
+import torch
+from matplotlib import pyplot as plt
 from torchvision import transforms
 from tqdm import tqdm
 
-from config import *
+from config import device, pickle_file
 from models import data_transforms
 from utils import align_face, get_face_all_attributes, draw_bboxes
+
+angles_file = 'data/angles.txt'
 
 
 def extract(filename):
@@ -67,13 +71,7 @@ def get_image(samples, transformer, file):
     return img
 
 
-def evaluate():
-    checkpoint = 'BEST_checkpoint.tar'
-    checkpoint = torch.load(checkpoint)
-    model = checkpoint['model']
-    model = model.to(device)
-    model.eval()
-
+def evaluate(model):
     with open(pickle_file, 'rb') as file:
         data = pickle.load(file)
 
@@ -114,38 +112,49 @@ def evaluate():
         file.writelines(angles)
 
 
-def visualize(angles_file, threshold):
+def visualize(threshold):
     with open(angles_file) as file:
         lines = file.readlines()
 
     ones = []
     zeros = []
-    wrong = 0
+
     for line in lines:
         tokens = line.split()
         angle = float(tokens[0])
         type = int(tokens[1])
         if type == 1:
             ones.append(angle)
+        else:
+            zeros.append(angle)
+
+    bins = np.linspace(0, 180, 181)
+
+    plt.hist(zeros, bins, alpha=0.5, label='0')
+    plt.hist(ones, bins, alpha=0.5, label='1')
+    plt.legend(loc='upper right')
+    plt.plot([threshold, threshold], [0, 100], 'k-', lw=2)
+    plt.show()
+
+
+def accuracy(threshold):
+    with open(angles_file) as file:
+        lines = file.readlines()
+
+    wrong = 0
+    for line in lines:
+        tokens = line.split()
+        angle = float(tokens[0])
+        type = int(tokens[1])
+        if type == 1:
             if angle > threshold:
                 wrong += 1
         else:
-            zeros.append(angle)
             if angle <= threshold:
                 wrong += 1
 
-    import numpy
-    from matplotlib import pyplot
-
-    bins = numpy.linspace(0, 180, 181)
-
-    pyplot.hist(zeros, bins, alpha=0.5, label='0')
-    pyplot.hist(ones, bins, alpha=0.5, label='1')
-    pyplot.legend(loc='upper right')
-    pyplot.plot([threshold, threshold], [0, 100], 'k-', lw=2)
-    pyplot.show()
-
-    print('Accuracy: {}%'.format(100 - wrong / 6000 * 100))
+    accuracy = 1 - wrong / 6000
+    return accuracy
 
 
 def show_bboxes(folder):
@@ -216,45 +225,70 @@ def copy_file(old, new):
     cv.imwrite(filename, img)
 
 
-if __name__ == "__main__":
+def get_threshold():
+    print('Calculating threshold...')
+
+    with open(angles_file, 'r') as file:
+        lines = file.readlines()
+
+    data = []
+
+    for line in lines:
+        tokens = line.split()
+        angle = float(tokens[0])
+        type = int(tokens[1])
+        data.append({'angle': angle, 'type': type})
+
+    min_error = 6000
+    min_threshold = 0
+
+    for d in data:
+        threshold = d['angle']
+        type1 = len([s for s in data if s['angle'] <= threshold and s['type'] == 0])
+        type2 = len([s for s in data if s['angle'] > threshold and s['type'] == 1])
+        num_errors = type1 + type2
+        if num_errors < min_error:
+            min_error = num_errors
+            min_threshold = threshold
+
+    # print(min_error, min_threshold)
+    return min_threshold
+
+
+def lfw_test(model):
     filename = 'data/lfw-funneled.tgz'
     if not os.path.isdir('data/lfw_funneled'):
         print('Extracting {}...'.format(filename))
         extract(filename)
 
-    pickle_file = 'data/lfw_funneled.pkl'
-    if not os.path.isfile(pickle_file):
-        print('Processing {}...'.format(pickle_file))
-        process()
-    else:
-        with open(pickle_file, 'rb') as file:
-            data = pickle.load(file)
+    lfw_pickle = 'data/lfw_funneled.pkl'
+    # if not os.path.isfile(pickle_file):
+    print('Processing {}...'.format(lfw_pickle))
+    process()
 
-        lines = []
-        samples = data['samples']
-        for sample in samples:
-            line = sample['full_path'] + '\n'
-            line.replace('\\', '/')
-            lines.append(line)
-
-        with open('data/full_path.txt', 'w') as file:
-            file.writelines(lines)
-
-    angles_file = 'data/angles.txt'
-    if not os.path.isfile(angles_file):
-        print('Evaluating {}...'.format(angles_file))
-        evaluate()
+    # if not os.path.isfile(angles_file):
+    print('Evaluating {}...'.format(angles_file))
+    evaluate(model)
 
     print('Calculating threshold...')
-    threshold = 70.36
+    # threshold = 70.36
+    thres = get_threshold()
+    acc = accuracy(thres)
+    return acc, thres
+
+
+if __name__ == "__main__":
+    checkpoint = 'BEST_checkpoint.tar'
+    checkpoint = torch.load(checkpoint)
+    model = checkpoint['model']
+    model = model.to(device)
+    model.eval()
+
+    acc, threshold = lfw_test(model)
+    print('Accuracy: {}%'.format(acc * 100))
 
     print('Visualizing {}...'.format(angles_file))
-    visualize(angles_file, threshold)
+    visualize(threshold)
 
-    # folder = 'data/lfw_with_bboxes'
-    # if not os.path.isdir(folder):
-    #     os.mkdir(folder)
-    # print('Drawing boxes...')
-    # show_bboxes(folder)
-
+    print('error analysis...')
     error_analysis(threshold)

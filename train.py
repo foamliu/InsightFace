@@ -3,27 +3,29 @@ import torch.utils.data
 from tensorboardX import SummaryWriter
 from torch import nn
 
+from config import device, num_workers, grad_clip, print_freq
 from data_gen import ArcFaceDataset
+from lfw_eval import lfw_test
 from models import ArcFaceModel, ArcMarginModel
-from utils import *
+from utils import parse_args, adjust_learning_rate, save_checkpoint, AverageMeter, clip_gradient, accuracy
 
 
-def main():
-    global checkpoint, start_epoch, train_steps
-    best_loss = 100000
+def train_net(args):
+    checkpoint = None
+    start_epoch = 0
+    best_acc = 0
     writer = SummaryWriter()
-    train_steps = 0
     epochs_since_improvement = 0
 
     # Initialize / load checkpoint
     if checkpoint is None:
-        model = ArcFaceModel()
+        model = ArcFaceModel(args)
         model = nn.DataParallel(model)
-        metric_fc = ArcMarginModel()
+        metric_fc = ArcMarginModel(args)
         metric_fc = nn.DataParallel(metric_fc)
 
-        optimizer = torch.optim.SGD([{'params': model.parameters()}, {'params': metric_fc.parameters()}], lr=lr,
-                                    momentum=0.9, weight_decay=weight_decay)
+        optimizer = torch.optim.SGD([{'params': model.parameters()}, {'params': metric_fc.parameters()}], lr=args.lr,
+                                    momentum=args.mom, weight_decay=args.weight_decay)
 
     else:
         checkpoint = torch.load(checkpoint)
@@ -44,15 +46,16 @@ def main():
 
     # Custom dataloaders
     train_dataset = ArcFaceDataset('train')
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
                                                num_workers=num_workers,
                                                pin_memory=True)
-    val_dataset = ArcFaceDataset('valid')
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers,
-                                             pin_memory=True)
+    # val_dataset = ArcFaceDataset('valid')
+    # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False,
+    #                                          num_workers=num_workers,
+    #                                          pin_memory=True)
 
     # Epochs
-    for epoch in range(start_epoch, max_epoch):
+    for epoch in range(start_epoch, args.end_epoch):
 
         if epoch > 8:
             adjust_learning_rate(optimizer, 0.85)
@@ -69,17 +72,20 @@ def main():
         writer.add_scalar('Train Top5 Accuracy', train_top5_accs, epoch)
 
         # One epoch's validation
-        valid_loss, valid_top5_accs = validate(val_loader=val_loader,
-                                               model=model,
-                                               metric_fc=metric_fc,
-                                               criterion=criterion)
+        # valid_loss, valid_top5_accs = validate(val_loader=val_loader,
+        #                                        model=model,
+        #                                        metric_fc=metric_fc,
+        #                                        criterion=criterion)
+        #
+        # writer.add_scalar('Valid Loss', valid_loss, epoch)
+        # writer.add_scalar('Valid Top5 Accuracy', valid_top5_accs, epoch)
 
-        writer.add_scalar('Valid Loss', valid_loss, epoch)
-        writer.add_scalar('Valid Top5 Accuracy', valid_top5_accs, epoch)
+        lfw_acc, threshold = lfw_test(model)
+        writer.add_scalar('LFW Accuracy', lfw_acc, epoch)
 
         # Check if there was an improvement
-        is_best = valid_loss < best_loss
-        best_loss = min(valid_loss, best_loss)
+        is_best = lfw_acc > best_acc
+        best_acc = max(lfw_acc, best_acc)
         if not is_best:
             epochs_since_improvement += 1
             print("\nEpochs since last improvement: %d\n" % (epochs_since_improvement,))
@@ -87,7 +93,7 @@ def main():
             epochs_since_improvement = 0
 
         # Save checkpoint
-        save_checkpoint(epoch, epochs_since_improvement, model, metric_fc, optimizer, best_loss, is_best)
+        save_checkpoint(epoch, epochs_since_improvement, model, metric_fc, optimizer, best_acc, is_best)
 
 
 def train(train_loader, model, metric_fc, criterion, optimizer, epoch):
@@ -128,9 +134,6 @@ def train(train_loader, model, metric_fc, criterion, optimizer, epoch):
         top5_accuracy = accuracy(output, label, 5)
         top5_accs.update(top5_accuracy)
 
-        global train_steps
-        train_steps += 1
-
         # Print status
         if i % print_freq == 0:
             print('Epoch: [{0}][{1}/{2}]\t'
@@ -142,40 +145,46 @@ def train(train_loader, model, metric_fc, criterion, optimizer, epoch):
     return losses.avg, top5_accs.avg
 
 
-def validate(val_loader, model, metric_fc, criterion):
-    model.eval()  # eval mode (no dropout or batchnorm)
-    metric_fc.eval()
+# def validate(val_loader, model, metric_fc, criterion):
+#     model.eval()  # eval mode (no dropout or batchnorm)
+#     metric_fc.eval()
+#
+#     losses = AverageMeter()
+#     top5_accs = AverageMeter()
+#
+#     with torch.no_grad():
+#         # Batches
+#         for i, (img, label) in enumerate(val_loader):
+#             # Move to GPU, if available
+#             img = img.to(device)
+#             label = label.to(device)
+#
+#             # Forward prop.
+#             feature = model(img)  # embedding => [N, 512]
+#             output = metric_fc(feature, label)  # class_id_out => [N, 10575]
+#
+#             # Calculate loss
+#             loss = criterion(output, label)
+#
+#             # Keep track of metrics
+#             losses.update(loss.item())
+#             top5_accuracy = accuracy(output, label, 5)
+#             top5_accs.update(top5_accuracy)
+#
+#             if i % print_freq == 0:
+#                 print('Validation: [{0}/{1}]\t'
+#                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+#                       'Top5 Accuracy {top5_accs.val:.3f} ({top5_accs.avg:.3f})'.format(i, len(val_loader),
+#                                                                                        loss=losses,
+#                                                                                        top5_accs=top5_accs))
+#
+#     return losses.avg, top5_accs.avg
 
-    losses = AverageMeter()
-    top5_accs = AverageMeter()
 
-    with torch.no_grad():
-        # Batches
-        for i, (img, label) in enumerate(val_loader):
-            # Move to GPU, if available
-            img = img.to(device)
-            label = label.to(device)
-
-            # Forward prop.
-            feature = model(img)  # embedding => [N, 512]
-            output = metric_fc(feature, label)  # class_id_out => [N, 10575]
-
-            # Calculate loss
-            loss = criterion(output, label)
-
-            # Keep track of metrics
-            losses.update(loss.item())
-            top5_accuracy = accuracy(output, label, 5)
-            top5_accs.update(top5_accuracy)
-
-            if i % print_freq == 0:
-                print('Validation: [{0}/{1}]\t'
-                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                      'Top5 Accuracy {top5_accs.val:.3f} ({top5_accs.avg:.3f})'.format(i, len(val_loader),
-                                                                                       loss=losses,
-                                                                                       top5_accs=top5_accs))
-
-    return losses.avg, top5_accs.avg
+def main():
+    global args
+    args = parse_args()
+    train_net(args)
 
 
 if __name__ == '__main__':

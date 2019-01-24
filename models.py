@@ -1,5 +1,6 @@
 import math
 
+import torch
 import torch.nn.functional as F
 import torchvision
 from torch import nn
@@ -7,7 +8,8 @@ from torch.nn import Parameter
 from torchsummary import summary
 from torchvision import transforms
 
-from config import *
+from config import device, num_classes
+from utils import parse_args
 
 # Data augmentation and normalization for training
 # Just normalization for validation
@@ -25,18 +27,18 @@ data_transforms = {
 
 
 class ArcFaceModel(nn.Module):
-    def __init__(self):
+    def __init__(self, args):
         super(ArcFaceModel, self).__init__()
 
-        resnet = torchvision.models.resnet50(pretrained=False)
+        resnet = torchvision.models.resnet50(pretrained=args.pretrained)
 
         # Remove linear and pool layers (since we're not doing classification)
         modules = list(resnet.children())[:-2]
         self.resnet = nn.Sequential(*modules)
         self.bn1 = nn.BatchNorm2d(2048)
         self.dropout = nn.Dropout()
-        self.fc = nn.Linear(2048 * 4 * 4, embedding_size)
-        self.bn2 = nn.BatchNorm1d(embedding_size)
+        self.fc = nn.Linear(2048 * 4 * 4, args.emb_size)
+        self.bn2 = nn.BatchNorm1d(args.emb_size)
 
     def forward(self, images):
         x = self.resnet(images)  # [N, 512, 4, 4]
@@ -49,16 +51,20 @@ class ArcFaceModel(nn.Module):
 
 
 class ArcMarginModel(nn.Module):
-    def __init__(self):
+    def __init__(self, args):
         super(ArcMarginModel, self).__init__()
 
-        self.weight = Parameter(torch.FloatTensor(num_classes, embedding_size))
+        self.weight = Parameter(torch.FloatTensor(num_classes, args.emb_size))
         nn.init.xavier_uniform_(self.weight)
 
-        self.cos_m = math.cos(m)
-        self.sin_m = math.sin(m)
-        self.th = math.cos(math.pi - m)
-        self.mm = math.sin(math.pi - m) * m
+        self.easy_margin = args.easy_margin
+        self.m = args.margin_m
+        self.s = args.margin_s
+
+        self.cos_m = math.cos(self.m)
+        self.sin_m = math.sin(self.m)
+        self.th = math.cos(math.pi - self.m)
+        self.mm = math.sin(math.pi - self.m) * self.m
 
     def forward(self, input, label):
         x = F.normalize(input)
@@ -66,15 +72,19 @@ class ArcMarginModel(nn.Module):
         cosine = F.linear(x, W)
         sine = torch.sqrt(1.0 - torch.pow(cosine, 2))
         phi = cosine * self.cos_m - sine * self.sin_m  # cos(theta + m)
-        phi = torch.where(cosine > self.th, phi, cosine - self.mm)
+        if self.easy_margin:
+            phi = torch.where(cosine > 0, phi, cosine)
+        else:
+            phi = torch.where(cosine > self.th, phi, cosine - self.mm)
         one_hot = torch.zeros(cosine.size(), device=device)
         one_hot.scatter_(1, label.view(-1, 1).long(), 1)
         output = (one_hot * phi) + ((1.0 - one_hot) * cosine)
-        output *= s
+        output *= self.s
         # output = F.softmax(output, dim=1)
         return output
 
 
 if __name__ == "__main__":
-    model = ArcFaceModel().to(device)
+    args = parse_args()
+    model = ArcFaceModel(args).to(device)
     summary(model, (3, 112, 112))

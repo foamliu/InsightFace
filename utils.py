@@ -1,11 +1,13 @@
+import argparse
 import math
 
 import cv2 as cv
 import numpy as np
+import torch
 from PIL import Image
 
 from align_faces import get_reference_facial_points, warp_and_crop_face
-from config import *
+from config import image_h, image_w
 from mtcnn.detector import detect_faces
 
 
@@ -21,10 +23,10 @@ def clip_gradient(optimizer, grad_clip):
                 param.grad.data.clamp_(-grad_clip, grad_clip)
 
 
-def save_checkpoint(epoch, epochs_since_improvement, model, metric_fc, optimizer, loss, is_best):
+def save_checkpoint(epoch, epochs_since_improvement, model, metric_fc, optimizer, acc, is_best):
     state = {'epoch': epoch,
              'epochs_since_improvement': epochs_since_improvement,
-             'loss': loss,
+             'acc': acc,
              'model': model,
              'metric_fc': metric_fc,
              'optimizer': optimizer}
@@ -158,3 +160,21 @@ def draw_bboxes(img, bounding_boxes, facial_landmarks=[]):
         break  # only first
 
     return img
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Train face network')
+    # general
+    parser.add_argument('--pretrained', default='', help='pretrained model to load')
+    parser.add_argument('--network', default='r50', help='specify network')
+    parser.add_argument('--end-epoch', type=int, default=50, help='training epoch size.')
+    parser.add_argument('--lr', type=float, default=0.1, help='start learning rate')
+    parser.add_argument('--weight-decay', type=float, default=0.0005, help='weight decay')
+    parser.add_argument('--mom', type=float, default=0.9, help='momentum')
+    parser.add_argument('--emb-size', type=int, default=512, help='embedding length')
+    parser.add_argument('--batch-size', type=int, default=256, help='batch size in each context')
+    parser.add_argument('--margin-m', type=float, default=0.5, help='')
+    parser.add_argument('--margin-s', type=float, default=64.0, help='')
+    parser.add_argument('--easy-margin', type=int, default=0, help='')
+    args = parser.parse_args()
+    return args
