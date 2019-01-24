@@ -7,10 +7,10 @@ image_w = 112
 image_h = 112
 channel = 3
 num_classes = 10575
-s = 30
+s = 50
 m = 0.5
 embedding_size = 512
-dropout = 0.4
+dropout = 0.5
 
 # Training parameters
 start_epoch = 0
