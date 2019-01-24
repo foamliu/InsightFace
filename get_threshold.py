@@ -93,4 +93,5 @@ def lr():
 
 
 if __name__ == "__main__":
-    lr()
+    # lr()
+    naive()

@@ -246,7 +246,7 @@ if __name__ == "__main__":
         evaluate()
 
     print('Calculating threshold...')
-    threshold = 70.36
+    threshold = 72.39
 
     print('Visualizing {}...'.format(angles_file))
     visualize(angles_file, threshold)
