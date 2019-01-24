@@ -1,6 +1,7 @@
 import math
 import os
 import pickle
+import random
 import tarfile
 
 import cv2 as cv
@@ -113,7 +114,7 @@ def evaluate():
         file.writelines(angles)
 
 
-def visualize(angles_file):
+def visualize(angles_file, threshold):
     with open(angles_file) as file:
         lines = file.readlines()
 
@@ -126,11 +127,11 @@ def visualize(angles_file):
         type = int(tokens[1])
         if type == 1:
             ones.append(angle)
-            if angle > 75:
+            if angle > threshold:
                 wrong += 1
         else:
             zeros.append(angle)
-            if angle <= 75:
+            if angle <= threshold:
                 wrong += 1
 
     import numpy
@@ -141,6 +142,7 @@ def visualize(angles_file):
     pyplot.hist(zeros, bins, alpha=0.5, label='0')
     pyplot.hist(ones, bins, alpha=0.5, label='1')
     pyplot.legend(loc='upper right')
+    pyplot.plot([threshold, threshold], [0, 100], 'k-', lw=2)
     pyplot.show()
 
     print('Accuracy: {}%'.format(100 - wrong / 6000 * 100))
@@ -160,6 +162,55 @@ def show_bboxes(folder):
         filename = os.path.basename(full_path)
         filename = os.path.join(folder, filename)
         cv.imwrite(filename, img)
+
+
+def error_analysis(threshold):
+    with open(angles_file) as file:
+        angle_lines = file.readlines()
+
+    fp = []
+    fn = []
+    for i, line in enumerate(angle_lines):
+        tokens = line.split()
+        angle = float(tokens[0])
+        type = int(tokens[1])
+        if angle <= threshold and type == 0:
+            fp.append(i)
+        if angle > threshold and type == 1:
+            fn.append(i)
+
+    fp_list = random.sample(fp, 10)
+    fn_list = random.sample(fn, 10)
+
+    filename = 'data/lfw_test_pair.txt'
+    with open(filename, 'r') as file:
+        pair_lines = file.readlines()
+
+    for i in range(10):
+        fp_id = fp_list[i]
+        fp_line = pair_lines[fp_id]
+        tokens = fp_line.split()
+        file0 = tokens[0]
+        copy_file(file0, '{}_fp_0.jpg'.format(i))
+        file1 = tokens[1]
+        copy_file(file1, '{}_fp_1.jpg'.format(i))
+
+    for i in range(10):
+        fn_id = fn_list[i]
+        fn_line = pair_lines[fn_id]
+        tokens = fn_line.split()
+        file0 = tokens[0]
+        copy_file(file0, '{}_fn_0.jpg'.format(i))
+        file1 = tokens[1]
+        copy_file(file1, '{}_fn_1.jpg'.format(i))
+
+
+def copy_file(old, new):
+    filename = os.path.join('data/lfw_funneled', old)
+    img = cv.imread(filename)
+    cv.resize(img, (224, 224))
+    filename = os.path.join('images', new)
+    cv.imwrite(filename, img)
 
 
 if __name__ == "__main__":
@@ -191,11 +242,16 @@ if __name__ == "__main__":
         print('Evaluating {}...'.format(angles_file))
         evaluate()
 
-    print('Visualizing {}...'.format(angles_file))
-    visualize(angles_file)
+    print('Calculating threshold...')
+    threshold = 70.36
 
-    folder = 'data/lfw_with_bboxes'
-    if not os.path.isdir(folder):
-        os.mkdir(folder)
-    print('Drawing boxes...')
-    show_bboxes(folder)
+    print('Visualizing {}...'.format(angles_file))
+    visualize(angles_file, threshold)
+
+    # folder = 'data/lfw_with_bboxes'
+    # if not os.path.isdir(folder):
+    #     os.mkdir(folder)
+    # print('Drawing boxes...')
+    # show_bboxes(folder)
+
+    error_analysis(threshold)
