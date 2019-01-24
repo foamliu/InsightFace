@@ -1,3 +1,5 @@
+import math
+
 import cv2 as cv
 import numpy as np
 from PIL import Image
@@ -112,13 +114,31 @@ def get_face_attributes(full_path):
     return False, None
 
 
+def select_central_face(im_size, bounding_boxes):
+    width, height = im_size
+    nearest_index = -1
+    nearest_distance = 100000
+    for i, b in enumerate(bounding_boxes):
+        x_box_center = (b[0] + b[2]) / 2
+        y_box_center = (b[0] + b[2]) / 2
+        x_img = width / 2
+        y_img = height / 2
+        distance = math.sqrt((x_box_center - x_img) ** 2 + (y_box_center - y_img) ** 2)
+        if distance < nearest_distance:
+            nearest_distance = distance
+            nearest_index = i
+
+    return nearest_index
+
+
 def get_face_all_attributes(full_path):
     try:
         img = Image.open(full_path).convert('RGB')
         bounding_boxes, landmarks = detect_faces(img)
 
         if len(landmarks) > 0:
-            return True, bounding_boxes, landmarks
+            i = select_central_face(img.size, bounding_boxes)
+            return True, [bounding_boxes[i]], [landmarks[i]]
 
     except KeyboardInterrupt:
         raise
