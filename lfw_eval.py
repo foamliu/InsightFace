@@ -11,11 +11,12 @@ from matplotlib import pyplot as plt
 from torchvision import transforms
 from tqdm import tqdm
 
-from config import device, pickle_file
+from config import device
 from models import data_transforms
 from utils import align_face, get_face_all_attributes, draw_bboxes
 
 angles_file = 'data/angles.txt'
+lfw_pickle = 'data/lfw_funneled.pkl'
 
 
 def extract(filename):
@@ -51,7 +52,7 @@ def process():
                 {'class_id': class_id, 'subject': sub, 'full_path': filename, 'bounding_boxes': bounding_boxes,
                  'landmarks': landmarks})
 
-    with open(pickle_file, 'wb') as file:
+    with open(lfw_pickle, 'wb') as file:
         save = {
             'samples': samples
         }
@@ -72,7 +73,7 @@ def get_image(samples, transformer, file):
 
 
 def evaluate(model):
-    with open(pickle_file, 'rb') as file:
+    with open(lfw_pickle, 'rb') as file:
         data = pickle.load(file)
 
     samples = data['samples']
@@ -158,7 +159,7 @@ def accuracy(threshold):
 
 
 def show_bboxes(folder):
-    with open(pickle_file, 'rb') as file:
+    with open(lfw_pickle, 'rb') as file:
         data = pickle.load(file)
 
     samples = data['samples']
@@ -259,8 +260,7 @@ def lfw_test(model):
         print('Extracting {}...'.format(filename))
         extract(filename)
 
-    lfw_pickle = 'data/lfw_funneled.pkl'
-    # if not os.path.isfile(pickle_file):
+    # if not os.path.isfile(lfw_pickle):
     print('Processing {}...'.format(lfw_pickle))
     process()
 
