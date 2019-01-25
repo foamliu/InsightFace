@@ -2,6 +2,7 @@ tqdm
 opencv-python
 pillow
 torch
+torchvision
 numpy
 scikit-image
 torchsummary
