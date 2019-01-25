@@ -79,7 +79,7 @@ def train_net(args):
         #
         # writer.add_scalar('Valid Loss', valid_loss, epoch)
         # writer.add_scalar('Valid Top5 Accuracy', valid_top5_accs, epoch)
-        if epoch > 8:
+        if epoch > -1:
             lfw_acc, threshold = lfw_test(model)
             writer.add_scalar('LFW Accuracy', lfw_acc, epoch)
 

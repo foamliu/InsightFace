@@ -89,7 +89,7 @@ def evaluate(model):
     angles = []
 
     with torch.no_grad():
-        for line in tqdm(lines):
+        for line in lines:
             tokens = line.split()
             file0 = tokens[0]
             img0 = get_image(samples, transformer, file0)
