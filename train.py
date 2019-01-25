@@ -1,4 +1,3 @@
-import torch.optim
 import torch.utils.data
 from tensorboardX import SummaryWriter
 from torch import nn
