@@ -1,2 +1,6 @@
+tqdm
+opencv-python
+pillow
+scikit-image
 torchsummary
 tensorboardX
