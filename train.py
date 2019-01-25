@@ -48,7 +48,7 @@ def main():
                                                num_workers=num_workers,
                                                pin_memory=True)
     val_dataset = ArcFaceDataset('valid')
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers,
                                              pin_memory=True)
 
     # Epochs
@@ -64,7 +64,7 @@ def main():
                                             criterion=criterion,
                                             optimizer=optimizer,
                                             epoch=epoch)
-        train_dataset.shuffle()
+        # train_dataset.shuffle()
         writer.add_scalar('Train Loss', train_loss, epoch)
         writer.add_scalar('Train Top5 Accuracy', train_top5_accs, epoch)
 
