@@ -73,6 +73,8 @@ def get_image(samples, transformer, file):
 
 
 def evaluate(model):
+    model.eval()
+
     with open(lfw_pickle, 'rb') as file:
         data = pickle.load(file)
 
