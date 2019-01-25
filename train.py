@@ -54,7 +54,7 @@ def main():
     # Epochs
     for epoch in range(start_epoch, max_epoch):
 
-        if epoch > 10:
+        if epoch > 8:
             adjust_learning_rate(optimizer, 0.85)
 
         # One epoch's training
