@@ -1,6 +1,7 @@
 tqdm
 opencv-python
 pillow
+torch
 scikit-image
 torchsummary
 tensorboardX
