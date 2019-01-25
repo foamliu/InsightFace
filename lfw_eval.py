@@ -40,7 +40,7 @@ def process():
     assert (len(file_names) == 13233), "Number of files is: {}!".format(len(file_names))
 
     samples = []
-    for item in tqdm(file_names):
+    for item in file_names:
         filename = item['filename']
         class_id = item['class_id']
         sub = item['subject']
@@ -226,8 +226,6 @@ def copy_file(old, new):
 
 
 def get_threshold():
-    print('Calculating threshold...')
-
     with open(angles_file, 'r') as file:
         lines = file.readlines()
 
@@ -273,7 +271,9 @@ def lfw_test(model):
     print('Calculating threshold...')
     # threshold = 70.36
     thres = get_threshold()
+    print('Calculating accuracy...')
     acc = accuracy(thres)
+    print('Accuracy: {}%, threshold: {}'.format(acc * 100, thres))
     return acc, thres
 
 
@@ -285,7 +285,6 @@ if __name__ == "__main__":
     model.eval()
 
     acc, threshold = lfw_test(model)
-    print('Accuracy: {}%'.format(acc * 100))
 
     print('Visualizing {}...'.format(angles_file))
     visualize(threshold)
