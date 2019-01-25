@@ -1,4 +1,4 @@
-import torch.utils.data
+import torch
 from tensorboardX import SummaryWriter
 from torch import nn
 
