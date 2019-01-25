@@ -165,16 +165,16 @@ def draw_bboxes(img, bounding_boxes, facial_landmarks=[]):
 def parse_args():
     parser = argparse.ArgumentParser(description='Train face network')
     # general
-    parser.add_argument('--pretrained', default='', help='pretrained model to load')
+    parser.add_argument('--pretrained', type=bool, default=False, help='pretrained model')
     parser.add_argument('--network', default='r50', help='specify network')
     parser.add_argument('--end-epoch', type=int, default=50, help='training epoch size.')
     parser.add_argument('--lr', type=float, default=0.1, help='start learning rate')
     parser.add_argument('--weight-decay', type=float, default=0.0005, help='weight decay')
     parser.add_argument('--mom', type=float, default=0.9, help='momentum')
     parser.add_argument('--emb-size', type=int, default=512, help='embedding length')
-    parser.add_argument('--batch-size', type=int, default=256, help='batch size in each context')
+    parser.add_argument('--batch-size', type=int, default=512, help='batch size in each context')
     parser.add_argument('--margin-m', type=float, default=0.5, help='')
-    parser.add_argument('--margin-s', type=float, default=64.0, help='')
-    parser.add_argument('--easy-margin', type=int, default=0, help='')
+    parser.add_argument('--margin-s', type=float, default=50.0, help='')
+    parser.add_argument('--easy-margin', type=bool, default=False, help='')
     args = parser.parse_args()
     return args

@@ -79,21 +79,21 @@ def train_net(args):
         #
         # writer.add_scalar('Valid Loss', valid_loss, epoch)
         # writer.add_scalar('Valid Top5 Accuracy', valid_top5_accs, epoch)
+        if epoch > 8:
+            lfw_acc, threshold = lfw_test(model)
+            writer.add_scalar('LFW Accuracy', lfw_acc, epoch)
 
-        lfw_acc, threshold = lfw_test(model)
-        writer.add_scalar('LFW Accuracy', lfw_acc, epoch)
+            # Check if there was an improvement
+            is_best = lfw_acc > best_acc
+            best_acc = max(lfw_acc, best_acc)
+            if not is_best:
+                epochs_since_improvement += 1
+                print("\nEpochs since last improvement: %d\n" % (epochs_since_improvement,))
+            else:
+                epochs_since_improvement = 0
 
-        # Check if there was an improvement
-        is_best = lfw_acc > best_acc
-        best_acc = max(lfw_acc, best_acc)
-        if not is_best:
-            epochs_since_improvement += 1
-            print("\nEpochs since last improvement: %d\n" % (epochs_since_improvement,))
-        else:
-            epochs_since_improvement = 0
-
-        # Save checkpoint
-        save_checkpoint(epoch, epochs_since_improvement, model, metric_fc, optimizer, best_acc, is_best)
+            # Save checkpoint
+            save_checkpoint(epoch, epochs_since_improvement, model, metric_fc, optimizer, best_acc, is_best)
 
 
 def train(train_loader, model, metric_fc, criterion, optimizer, epoch):
