@@ -169,6 +169,7 @@ def parse_args():
     parser.add_argument('--network', default='r50', help='specify network')
     parser.add_argument('--end-epoch', type=int, default=50, help='training epoch size.')
     parser.add_argument('--lr', type=float, default=0.1, help='start learning rate')
+    parser.add_argument('--optimizer', default='sgd', help='')
     parser.add_argument('--weight-decay', type=float, default=0.0005, help='weight decay')
     parser.add_argument('--mom', type=float, default=0.9, help='momentum')
     parser.add_argument('--emb-size', type=int, default=512, help='embedding length')
@@ -178,6 +179,5 @@ def parse_args():
     parser.add_argument('--easy-margin', type=bool, default=False, help='')
     parser.add_argument('--focal-loss', type=bool, default=False, help='')
     parser.add_argument('--gamma', type=float, default=2.0, help='')
-
     args = parser.parse_args()
     return args

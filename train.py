@@ -3,9 +3,10 @@ from datetime import datetime
 import torch
 from tensorboardX import SummaryWriter
 from torch import nn
-from focal_loss import FocalLoss
+
 from config import device, num_workers, grad_clip, print_freq
 from data_gen import ArcFaceDataset
+from focal_loss import FocalLoss
 from lfw_eval import lfw_test
 from models import ArcFaceModel, ArcMarginModel
 from utils import parse_args, adjust_learning_rate, save_checkpoint, AverageMeter, clip_gradient, accuracy
@@ -25,8 +26,12 @@ def train_net(args):
         metric_fc = ArcMarginModel(args)
         metric_fc = nn.DataParallel(metric_fc)
 
-        optimizer = torch.optim.SGD([{'params': model.parameters()}, {'params': metric_fc.parameters()}], lr=args.lr,
-                                    momentum=args.mom, weight_decay=args.weight_decay)
+        if args.optimizer == 'sgd':
+            optimizer = torch.optim.SGD([{'params': model.parameters()}, {'params': metric_fc.parameters()}],
+                                        lr=args.lr, momentum=args.mom, weight_decay=args.weight_decay)
+        else:
+            optimizer = torch.optim.Adam([{'params': model.parameters()}, {'params': metric_fc.parameters()}],
+                                         lr=args.lr, weight_decay=args.weight_decay)
 
     else:
         checkpoint = torch.load(checkpoint)
