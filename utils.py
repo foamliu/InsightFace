@@ -176,5 +176,8 @@ def parse_args():
     parser.add_argument('--margin-m', type=float, default=0.5, help='')
     parser.add_argument('--margin-s', type=float, default=50.0, help='')
     parser.add_argument('--easy-margin', type=bool, default=False, help='')
+    parser.add_argument('--focal-loss', type=bool, default=False, help='')
+    parser.add_argument('--gamma', type=float, default=2.0, help='')
+
     args = parser.parse_args()
     return args

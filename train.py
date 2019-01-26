@@ -3,7 +3,7 @@ from datetime import datetime
 import torch
 from tensorboardX import SummaryWriter
 from torch import nn
-
+from focal_loss import FocalLoss
 from config import device, num_workers, grad_clip, print_freq
 from data_gen import ArcFaceDataset
 from lfw_eval import lfw_test
@@ -43,7 +43,10 @@ def train_net(args):
     metric_fc = metric_fc.to(device)
 
     # Loss function
-    criterion = nn.CrossEntropyLoss().to(device)
+    if args.focal_loss:
+        criterion = FocalLoss(gamma=args.gamma).to(device)
+    else:
+        criterion = nn.CrossEntropyLoss().to(device)
 
     # Custom dataloaders
     train_dataset = ArcFaceDataset('train')
