@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import torch
 from tensorboardX import SummaryWriter
 from torch import nn
@@ -59,6 +61,7 @@ def train_net(args):
         if epoch > 8:
             adjust_learning_rate(optimizer, 0.85)
 
+        start = datetime.now()
         # One epoch's training
         train_loss, train_top5_accs = train(train_loader=train_loader,
                                             model=model,
@@ -70,6 +73,10 @@ def train_net(args):
         writer.add_scalar('Train Loss', train_loss, epoch)
         writer.add_scalar('Train Top5 Accuracy', train_top5_accs, epoch)
 
+        end = datetime.now()
+        delta = end - start
+        print('{} seconds'.format(delta.seconds))
+
         # One epoch's validation
         # valid_loss, valid_top5_accs = validate(val_loader=val_loader,
         #                                        model=model,
@@ -79,6 +86,7 @@ def train_net(args):
         # writer.add_scalar('Valid Loss', valid_loss, epoch)
         # writer.add_scalar('Valid Top5 Accuracy', valid_top5_accs, epoch)
         if epoch > 8 and epoch % 2 == 0:
+            start = datetime.now()
             lfw_acc, threshold = lfw_test(model)
             writer.add_scalar('LFW Accuracy', lfw_acc, epoch)
 
@@ -93,6 +101,10 @@ def train_net(args):
 
             # Save checkpoint
             save_checkpoint(epoch, epochs_since_improvement, model, metric_fc, optimizer, best_acc, is_best)
+
+            end = datetime.now()
+            delta = end - start
+            print('{} seconds'.format(delta.seconds))
 
 
 def train(train_loader, model, metric_fc, criterion, optimizer, epoch):
