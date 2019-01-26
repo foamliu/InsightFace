@@ -169,6 +169,7 @@ def parse_args():
     parser.add_argument('--network', default='r50', help='specify network')
     parser.add_argument('--end-epoch', type=int, default=50, help='training epoch size.')
     parser.add_argument('--lr', type=float, default=0.1, help='start learning rate')
+    parser.add_argument('--lr-decay', type=float, default=0.80, help='learning rate decay')
     parser.add_argument('--optimizer', default='sgd', help='')
     parser.add_argument('--weight-decay', type=float, default=0.0005, help='weight decay')
     parser.add_argument('--mom', type=float, default=0.9, help='momentum')

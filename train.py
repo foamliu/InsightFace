@@ -66,7 +66,7 @@ def train_net(args):
     # Epochs
     for epoch in range(start_epoch, args.end_epoch):
         if args.optimizer == 'sgd' and epoch > 8:
-            adjust_learning_rate(optimizer, 0.85)
+            adjust_learning_rate(optimizer, args.lr_decay)
 
         start = datetime.now()
         # One epoch's training
