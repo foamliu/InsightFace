@@ -35,7 +35,13 @@ class ArcFaceDataset(Dataset):
         sample = self.samples[i]
         full_path = sample['full_path']
         landmarks = sample['landmarks']
-        img = align_face(full_path, landmarks)
+
+        try:
+            img = align_face(full_path, landmarks)
+        except Exception:
+            print('full_path: ' + full_path)
+            raise
+
         img = transforms.ToPILImage()(img)
         img = self.transformer(img)
 
