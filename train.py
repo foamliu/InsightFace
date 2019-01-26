@@ -65,8 +65,7 @@ def train_net(args):
 
     # Epochs
     for epoch in range(start_epoch, args.end_epoch):
-
-        if epoch > 8:
+        if args.optimizer == 'sgd' and epoch > 8:
             adjust_learning_rate(optimizer, 0.85)
 
         start = datetime.now()
