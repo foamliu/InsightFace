@@ -8,7 +8,7 @@ from config import device, num_workers, grad_clip, print_freq
 from data_gen import ArcFaceDataset
 from focal_loss import FocalLoss
 from lfw_eval import lfw_test
-from models import ArcFaceModel, ArcMarginModel
+from models import ArcFaceModel18, ArcFaceModel34, ArcFaceModel50, ArcMarginModel
 from utils import parse_args, adjust_learning_rate, save_checkpoint, AverageMeter, clip_gradient, accuracy
 
 
@@ -21,7 +21,14 @@ def train_net(args):
 
     # Initialize / load checkpoint
     if checkpoint is None:
-        model = ArcFaceModel(args)
+        if args.network == 'r50':
+            model = ArcFaceModel50(args)
+        elif args.network == 'r34':
+            model = ArcFaceModel34(args)
+        elif args.network == 'r18':
+            model = ArcFaceModel18(args)
+        else:
+            model = ArcFaceModel50(args)
         model = nn.DataParallel(model)
         metric_fc = ArcMarginModel(args)
         metric_fc = nn.DataParallel(metric_fc)
