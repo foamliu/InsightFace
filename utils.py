@@ -180,5 +180,6 @@ def parse_args():
     parser.add_argument('--easy-margin', type=bool, default=False, help='')
     parser.add_argument('--focal-loss', type=bool, default=False, help='')
     parser.add_argument('--gamma', type=float, default=2.0, help='')
+    parser.add_argument('--softmax', type=bool, default=False, help='')
     args = parser.parse_args()
     return args
