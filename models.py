@@ -108,6 +108,7 @@ class ArcMarginModel(nn.Module):
         self.easy_margin = args.easy_margin
         self.m = args.margin_m
         self.s = args.margin_s
+        self.softmax = args.softmax
 
         self.cos_m = math.cos(self.m)
         self.sin_m = math.sin(self.m)
@@ -128,7 +129,7 @@ class ArcMarginModel(nn.Module):
         one_hot.scatter_(1, label.view(-1, 1).long(), 1)
         output = (one_hot * phi) + ((1.0 - one_hot) * cosine)
         output *= self.s
-        if args.softmax:
+        if self.softmax:
             output = F.softmax(output, dim=1)
         return output
 
