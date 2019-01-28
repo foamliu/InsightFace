@@ -98,6 +98,30 @@ class ArcFaceModel50(nn.Module):
         return x
 
 
+class ArcFaceModel101(nn.Module):
+    def __init__(self, args):
+        super(ArcFaceModel101, self).__init__()
+
+        resnet = torchvision.models.resnet101(pretrained=args.pretrained)
+
+        # Remove linear and pool layers (since we're not doing classification)
+        modules = list(resnet.children())[:-2]
+        self.resnet = nn.Sequential(*modules)
+        self.bn1 = nn.BatchNorm2d(2048)
+        self.dropout = nn.Dropout()
+        self.fc = nn.Linear(2048 * 4 * 4, args.emb_size)
+        self.bn2 = nn.BatchNorm1d(args.emb_size)
+
+    def forward(self, images):
+        x = self.resnet(images)  # [N, 512, 4, 4]
+        x = self.bn1(x)
+        x = self.dropout(x)
+        x = x.view(x.size(0), -1)  # [N, 512]
+        x = self.fc(x)
+        x = self.bn2(x)
+        return x
+
+
 class ArcMarginModel(nn.Module):
     def __init__(self, args):
         super(ArcMarginModel, self).__init__()
@@ -136,5 +160,5 @@ class ArcMarginModel(nn.Module):
 
 if __name__ == "__main__":
     args = parse_args()
-    model = ArcFaceModel34(args).to(device)
+    model = ArcFaceModel101(args).to(device)
     summary(model, (3, 112, 112))
