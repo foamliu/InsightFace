@@ -93,7 +93,7 @@ def train_net(args):
         print('{} seconds'.format(delta.seconds))
 
         # One epoch's validation
-        if epoch > 10:
+        if epoch > 10 and epoch % 2 == 0:
             start = datetime.now()
             lfw_acc, threshold = lfw_test(model)
             writer.add_scalar('LFW Accuracy', lfw_acc, epoch)
