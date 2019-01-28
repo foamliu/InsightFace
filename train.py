@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import numpy as np
 import torch
 from tensorboardX import SummaryWriter
 from torch import nn
@@ -14,6 +15,8 @@ from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, accu
 
 
 def train_net(args):
+    torch.manual_seed(7)
+    np.random.seed(7)
     checkpoint = None
     start_epoch = 0
     best_acc = 0
