@@ -21,15 +21,10 @@ class ArcFaceDataset(Dataset):
 
         num_samples = len(samples)
         num_train = num_samples
-        # num_train = int(train_split * num_samples)
 
         if split == 'train':
             self.samples = samples[:num_train]
             self.transformer = data_transforms['train']
-
-        # else:
-        #     self.samples = samples[num_train:]
-        #     self.transformer = data_transforms['val']
 
     def __getitem__(self, i):
         sample = self.samples[i]
@@ -61,10 +56,8 @@ def show_align():
 
     samples = random.sample(data['samples'], 10)
 
-    sample_inputs = []
     for i, sample in enumerate(samples):
         full_path = sample['full_path']
-        subject = sample['subject']
         landmarks = sample['landmarks']
         raw = cv.imread(full_path)
         raw = cv.resize(raw, (224, 224))
