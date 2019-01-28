@@ -3,13 +3,14 @@ from datetime import datetime
 import torch
 from tensorboardX import SummaryWriter
 from torch import nn
+from torch.optim.lr_scheduler import StepLR
 
 from config import device, num_workers, grad_clip, print_freq
 from data_gen import ArcFaceDataset
 from focal_loss import FocalLoss
 from lfw_eval import lfw_test
 from models import ArcFaceModel18, ArcFaceModel34, ArcFaceModel50, ArcMarginModel
-from utils import parse_args, adjust_learning_rate, save_checkpoint, AverageMeter, clip_gradient, accuracy
+from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, accuracy
 
 
 def train_net(args):
@@ -65,15 +66,12 @@ def train_net(args):
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
                                                num_workers=num_workers,
                                                pin_memory=True)
-    # val_dataset = ArcFaceDataset('valid')
-    # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False,
-    #                                          num_workers=num_workers,
-    #                                          pin_memory=True)
+
+    scheduler = StepLR(optimizer, step_size=args.lr_step, gamma=0.1)
 
     # Epochs
     for epoch in range(start_epoch, args.end_epoch):
-        if args.optimizer == 'sgd' and epoch > 8:
-            adjust_learning_rate(optimizer, args.lr_decay)
+        scheduler.step()
 
         start = datetime.now()
         # One epoch's training
@@ -92,14 +90,7 @@ def train_net(args):
         print('{} seconds'.format(delta.seconds))
 
         # One epoch's validation
-        # valid_loss, valid_top5_accs = validate(val_loader=val_loader,
-        #                                        model=model,
-        #                                        metric_fc=metric_fc,
-        #                                        criterion=criterion)
-        #
-        # writer.add_scalar('Valid Loss', valid_loss, epoch)
-        # writer.add_scalar('Valid Top5 Accuracy', valid_top5_accs, epoch)
-        if epoch > 8 and epoch % 2 == 0:
+        if epoch > 10:
             start = datetime.now()
             lfw_acc, threshold = lfw_test(model)
             writer.add_scalar('LFW Accuracy', lfw_acc, epoch)
@@ -168,42 +159,6 @@ def train(train_loader, model, metric_fc, criterion, optimizer, epoch):
                                                                                    top5_accs=top5_accs))
 
     return losses.avg, top5_accs.avg
-
-
-# def validate(val_loader, model, metric_fc, criterion):
-#     model.eval()  # eval mode (no dropout or batchnorm)
-#     metric_fc.eval()
-#
-#     losses = AverageMeter()
-#     top5_accs = AverageMeter()
-#
-#     with torch.no_grad():
-#         # Batches
-#         for i, (img, label) in enumerate(val_loader):
-#             # Move to GPU, if available
-#             img = img.to(device)
-#             label = label.to(device)
-#
-#             # Forward prop.
-#             feature = model(img)  # embedding => [N, 512]
-#             output = metric_fc(feature, label)  # class_id_out => [N, 10575]
-#
-#             # Calculate loss
-#             loss = criterion(output, label)
-#
-#             # Keep track of metrics
-#             losses.update(loss.item())
-#             top5_accuracy = accuracy(output, label, 5)
-#             top5_accs.update(top5_accuracy)
-#
-#             if i % print_freq == 0:
-#                 print('Validation: [{0}/{1}]\t'
-#                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-#                       'Top5 Accuracy {top5_accs.val:.3f} ({top5_accs.avg:.3f})'.format(i, len(val_loader),
-#                                                                                        loss=losses,
-#                                                                                        top5_accs=top5_accs))
-#
-#     return losses.avg, top5_accs.avg
 
 
 def main():
