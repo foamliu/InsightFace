@@ -25,7 +25,7 @@ def train_net(args):
 
     # Initialize / load checkpoint
     if checkpoint is None:
-        if args.network == 'r101':
+        if args.network == 'r100':
             model = ArcFaceModel101(args)
         elif args.network == 'r50':
             model = ArcFaceModel50(args)
