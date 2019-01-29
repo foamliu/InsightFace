@@ -104,7 +104,7 @@ class ResNet(nn.Module):
     def __init__(self, block, layers):
         self.inplanes = 64
         super(ResNet, self).__init__()
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=2,
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1,
                                bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
@@ -114,7 +114,7 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
         self.bn2 = nn.BatchNorm2d(512)
         self.dropout = nn.Dropout()
-        self.fc = nn.Linear(512 * 8 * 8, 512)
+        self.fc = nn.Linear(512 * 7 * 7, 512)
         self.bn3 = nn.BatchNorm1d(512)
 
         for m in self.modules():
@@ -157,6 +157,7 @@ class ResNet(nn.Module):
         x = self.bn2(x)
         x = self.dropout(x)
         x = x.view(x.size(0), -1)
+        # print(x.size())
         x = self.fc(x)
         x = self.bn3(x)
 
