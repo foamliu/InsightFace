@@ -2,7 +2,6 @@ import math
 
 import torch
 import torch.nn.functional as F
-import torch.utils.model_zoo as model_zoo
 from torch import nn
 from torch.nn import Parameter
 from torchsummary import summary
@@ -220,63 +219,28 @@ class ResNet(nn.Module):
         return x
 
 
-def resnet18(pretrained=False, **kwargs):
-    """Constructs a ResNet-18 model.
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = ResNet(IRBlock, [2, 2, 2, 2], False, **kwargs)
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet18']))
+def resnet18(use_se=True, **kwargs):
+    model = ResNet(IRBlock, [2, 2, 2, 2], use_se=use_se, **kwargs)
     return model
 
 
-def resnet34(pretrained=False, **kwargs):
-    """Constructs a ResNet-34 model.
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = ResNet(IRBlock, [3, 4, 6, 3], **kwargs)
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet34']))
+def resnet34(use_se=True, **kwargs):
+    model = ResNet(IRBlock, [3, 4, 6, 3], use_se=use_se, **kwargs)
     return model
 
 
-def resnet50(pretrained=False, **kwargs):
-    """Constructs a ResNet-50 model.
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = ResNet(IRBlock, [3, 4, 6, 3], **kwargs)
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
+def resnet50(use_se=True, **kwargs):
+    model = ResNet(IRBlock, [3, 4, 6, 3], use_se=use_se, **kwargs)
     return model
 
 
-def resnet101(pretrained=False, **kwargs):
-    """Constructs a ResNet-101 model.
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = ResNet(IRBlock, [3, 4, 23, 3], **kwargs)
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet101']))
+def resnet101(use_se=True, **kwargs):
+    model = ResNet(IRBlock, [3, 4, 23, 3], use_se=use_se, **kwargs)
     return model
 
 
-def resnet152(pretrained=False, **kwargs):
-    """Constructs a ResNet-152 model.
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = ResNet(IRBlock, [3, 8, 36, 3], **kwargs)
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet152']))
+def resnet152(use_se=True, **kwargs):
+    model = ResNet(IRBlock, [3, 8, 36, 3], use_se=use_se, **kwargs)
     return model
 
 
