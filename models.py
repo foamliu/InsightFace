@@ -3,14 +3,12 @@ import math
 import torch
 import torch.nn.functional as F
 import torch.utils.model_zoo as model_zoo
-import torchvision
 from torch import nn
 from torch.nn import Parameter
 from torchsummary import summary
 from torchvision import transforms
 
 from config import device, num_classes
-from utils import parse_args
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']
@@ -106,28 +104,28 @@ class ResNet(nn.Module):
     def __init__(self, block, layers):
         self.inplanes = 64
         super(ResNet, self).__init__()
-        # self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
-        #                        bias=False)
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=2,
                                bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
-        # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0], stride=2)
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
-        # self.avgpool = nn.AvgPool2d(7, stride=1)
-        # self.fc = nn.Linear(512 * block.expansion, num_classes)
+        self.bn2 = nn.BatchNorm2d(512)
+        self.dropout = nn.Dropout()
         self.fc = nn.Linear(512 * 8 * 8, 512)
+        self.bn3 = nn.BatchNorm1d(512)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-            elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+                nn.init.xavier_normal_(m.weight)
+            elif isinstance(m, nn.BatchNorm2d) or isinstance(m, nn.BatchNorm1d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.xavier_normal_(m.weight)
+                nn.init.constant_(m.bias, 0)
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
@@ -150,16 +148,17 @@ class ResNet(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        # x = self.maxpool(x)
 
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
 
-        # x = self.avgpool(x)
+        x = self.bn2(x)
+        x = self.dropout(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
+        x = self.bn3(x)
 
         return x
 
