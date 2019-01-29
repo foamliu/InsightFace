@@ -129,13 +129,10 @@ def train(train_loader, model, metric_fc, criterion, optimizer, epoch):
         # Move to GPU, if available
         img = img.to(device)
         label = label.to(device)  # [N, 1]
-        # print('class_id_true.size(): ' + str(class_id_true.size()))
 
         # Forward prop.
         feature = model(img)  # embedding => [N, 512]
-        # print('embedding.size(): ' + str(embedding.size()))
         output = metric_fc(feature, label)  # class_id_out => [N, 10575]
-        # print('class_id_out.size(): ' + str(class_id_out.size()))
 
         # Calculate loss
         loss = criterion(output, label)
