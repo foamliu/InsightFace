@@ -12,7 +12,7 @@ from torchvision import transforms
 from tqdm import tqdm
 
 from config import device
-from models import data_transforms
+from data_gen import data_transforms
 from utils import align_face, get_face_all_attributes, draw_bboxes
 
 angles_file = 'data/angles.txt'
