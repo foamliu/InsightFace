@@ -10,7 +10,7 @@ from config import device, num_workers, grad_clip, print_freq
 from data_gen import ArcFaceDataset
 from focal_loss import FocalLoss
 from lfw_eval import lfw_test
-from models import ArcFaceModel18, ArcFaceModel34, ArcFaceModel50, ArcFaceModel101, ArcMarginModel
+from models import ArcFaceModel18, ArcFaceModel34, ArcFaceModel50, ArcFaceModel101, ArcMarginModel, resnet18
 from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, accuracy
 
 
@@ -32,7 +32,7 @@ def train_net(args):
         elif args.network == 'r34':
             model = ArcFaceModel34(args)
         elif args.network == 'r18':
-            model = ArcFaceModel18(args)
+            model = resnet18(args.pretrained)
         else:
             model = ArcFaceModel50(args)
         model = nn.DataParallel(model)
