@@ -284,6 +284,5 @@ class ArcMarginModel(nn.Module):
 
 if __name__ == "__main__":
     # args = parse_args()
-    # model = ArcFaceModel18(args).to(device)
-    model = resnet34().to(device)
+    model = resnet152().to(device)
     summary(model, (3, 112, 112))
