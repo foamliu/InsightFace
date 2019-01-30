@@ -8,6 +8,7 @@ from torch.nn import Parameter
 from torchsummary import summary
 
 from config import device, num_classes
+from utils import parse_args
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']
@@ -252,6 +253,7 @@ def resnet152(args, **kwargs):
     model = ResNet(IRBlock, [3, 8, 36, 3], use_se=args.use_se, **kwargs)
     if args.pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet152']))
+    return model
 
 
 def resnet_face18(use_se=True, **kwargs):
@@ -293,6 +295,6 @@ class ArcMarginModel(nn.Module):
 
 
 if __name__ == "__main__":
-    # args = parse_args()
-    model = resnet152().to(device)
+    args = parse_args()
+    model = resnet152(args).to(device)
     summary(model, (3, 112, 112))
