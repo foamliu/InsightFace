@@ -221,11 +221,6 @@ class ResNet(nn.Module):
 
 
 def resnet18(args, **kwargs):
-    """Constructs a ResNet-18 model.
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
     model = ResNet(IRBlock, [2, 2, 2, 2], use_se=args.use_se, **kwargs)
     if args.pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet18']))
@@ -233,11 +228,6 @@ def resnet18(args, **kwargs):
 
 
 def resnet34(args, **kwargs):
-    """Constructs a ResNet-34 model.
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
     model = ResNet(IRBlock, [3, 4, 6, 3], use_se=args.use_se, **kwargs)
     if args.pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet34']))
@@ -245,11 +235,6 @@ def resnet34(args, **kwargs):
 
 
 def resnet50(args, **kwargs):
-    """Constructs a ResNet-50 model.
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
     model = ResNet(IRBlock, [3, 4, 6, 3], use_se=args.use_se, **kwargs)
     if args.pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
@@ -257,11 +242,6 @@ def resnet50(args, **kwargs):
 
 
 def resnet101(args, **kwargs):
-    """Constructs a ResNet-101 model.
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
     model = ResNet(IRBlock, [3, 4, 23, 3], use_se=args.use_se, **kwargs)
     if args.pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet101']))
@@ -269,15 +249,9 @@ def resnet101(args, **kwargs):
 
 
 def resnet152(args, **kwargs):
-    """Constructs a ResNet-152 model.
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
     model = ResNet(IRBlock, [3, 8, 36, 3], use_se=args.use_se, **kwargs)
     if args.pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet152']))
-    return model
 
 
 def resnet_face18(use_se=True, **kwargs):
@@ -320,6 +294,5 @@ class ArcMarginModel(nn.Module):
 
 if __name__ == "__main__":
     # args = parse_args()
-    # model = ArcFaceModel18(args).to(device)
-    model = resnet34().to(device)
+    model = resnet152().to(device)
     summary(model, (3, 112, 112))
