@@ -4,7 +4,7 @@ Reproduce ArcFace [论文](https://arxiv.org/pdf/1801.07698.pdf)
 
 ## DataSet
 
-CASIA WebFace 数据集，10,575人物身份，494,414图片。
+CASIA WebFace DataSet，10,575 identities, 494,414 faces.
 
 ## Dependencies
 - PyTorch 1.0.0
