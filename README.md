@@ -1,6 +1,6 @@
 # InsightFace
 
-Reproduce ArcFace [论文](https://arxiv.org/pdf/1801.07698.pdf)
+Reproduce ArcFace [Paper](https://arxiv.org/pdf/1801.07698.pdf)
 
 ## DataSet
 
