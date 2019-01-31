@@ -201,7 +201,8 @@ def error_analysis(threshold):
     with open(filename, 'r') as file:
         pair_lines = file.readlines()
 
-    for i in range(10):
+    num_fp = min(10, len(fp_list))
+    for i in range(num_fp):
         fp_id = fp_list[i]
         fp_line = pair_lines[fp_id]
         tokens = fp_line.split()
@@ -210,7 +211,8 @@ def error_analysis(threshold):
         file1 = tokens[1]
         copy_file(file1, '{}_fp_1.jpg'.format(i))
 
-    for i in range(10):
+    num_fn = min(10, len(fn_list))
+    for i in range(num_fn):
         fn_id = fn_list[i]
         fn_line = pair_lines[fn_id]
         tokens = fn_line.split()
