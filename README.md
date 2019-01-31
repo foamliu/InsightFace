@@ -1,24 +1,24 @@
 # InsightFace
 
-复现 ArcFace [论文](https://arxiv.org/pdf/1801.07698.pdf)
+Reproduce ArcFace [论文](https://arxiv.org/pdf/1801.07698.pdf)
 
-## 数据集
+## DataSet
 
 CASIA WebFace 数据集，10,575人物身份，494,414图片。
 
-## 依赖的库
+## Dependencies
 - PyTorch 1.0.0
 
-## 用法
+## Usage
 
-### 数据预处理
-提取图片：
+### Data pre-processing
+Extract images：
 ```bash
 $ python pre_process.py
 ```
 
-#### 图像校准：
-原图 | 校准 | 原图 | 校准 |
+#### Image alignment：
+Original | Aligned | Original | Aligned |
 |---|---|---|---|
 |![image](https://github.com/foamliu/InsightFace/raw/master/images/0_raw.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/0_img.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/1_raw.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/1_img.jpg)|
 |![image](https://github.com/foamliu/InsightFace/raw/master/images/2_raw.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/2_img.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/3_raw.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/3_img.jpg)|
@@ -26,47 +26,41 @@ $ python pre_process.py
 |![image](https://github.com/foamliu/InsightFace/raw/master/images/6_raw.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/6_img.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/7_raw.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/7_img.jpg)|
 |![image](https://github.com/foamliu/InsightFace/raw/master/images/8_raw.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/8_img.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/9_raw.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/9_img.jpg)|
 
-### 训练
+### Train
 ```bash
 $ python train.py
 ```
 
-训练过程可视化：
+To visualize the training process：
 ```bash
 $ tensorboard --logdir=runs
 ```
-#|损失|准确度|
-|---|---|---|
-|训练|![image](https://github.com/foamliu/InsightFace/raw/master/images/train_loss.png)|![image](https://github.com/foamliu/InsightFace/raw/master/images/train_acc.png)|
-|验证|![image](https://github.com/foamliu/InsightFace/raw/master/images/valid_loss.png)|![image](https://github.com/foamliu/InsightFace/raw/master/images/valid_acc.png)|
 
-### 比较
-#|图片大小|网络|损失函数|Loss|批量大小|优化器|权重衰减|s|m|预训练|dropout|LFW|
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-|1|112x112|ResNet-50|ArcFace|4.6201|512|SGD|5e-4|30|0.5|否|0.5|98.7666%|
-|2|112x112|ResNet-50|ArcFace|5.699|256|SGD|5e-4|30|0.5|否|0.4|98.4333%|
-|3|112x112|ResNet-50|ArcFace|6.650|128|SGD|5e-4|30|0.5|否|0.5|98.4333%|
-|4|112x112|ResNet-50|ArcFace|TBD|512|SGD|5e-4|50|0.5|否|0.5|TBD|
+### Comparason
+#|image size|network|use-se|loss func|gamma|batch size|weight decay|s|m|LFW accuracy|
+|---|---|---|---|---|---|---|---|---|---|---|
+|1|112x112|ResNet-152|True|focal|2.0|128|5e-4|50|0.5|99.38%|
+|2|112x112|ResNet-101|True|focal|2.0|256|5e-4|50|0.5|99.27%|
+|3|112x112|ResNet-101|False|focal|2.0|256|5e-4|50|0.5|99.23%|
 
-## 性能评估
+## Performance evaluation
 
 ### LFW
-使用 Labeled Faces in the Wild (LFW) 数据集做性能评估:
+Use Labeled Faces in the Wild (LFW) dataset for performance evaluation:
 
-- 13233 人脸图片
-- 5749 人物身份
-- 1680 人有两张以上照片
-#### 准备数据
-下载 LFW database 放在 data 目录下:
+- 13233 faces
+- 5749 identities
+- 1680 identities with >=2 photo
+
+#### Data preparation
+Download LFW database put it under data folder:
 ```bash
 $ wget http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz
 $ wget http://vis-www.cs.umass.edu/lfw/pairs.txt
 $ wget http://vis-www.cs.umass.edu/lfw/people.txt
 ```
 
-#### 结果评估
-
-##### 假阳性
+##### False Positive
 1|2|1|2|
 |---|---|---|---|
 |![image](https://github.com/foamliu/InsightFace/raw/master/images/0_fp_0.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/0_fp_1.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/1_fp_0.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/1_fp_1.jpg)|
@@ -75,7 +69,7 @@ $ wget http://vis-www.cs.umass.edu/lfw/people.txt
 |![image](https://github.com/foamliu/InsightFace/raw/master/images/6_fp_0.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/6_fp_1.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/7_fp_0.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/7_fp_1.jpg)|
 |![image](https://github.com/foamliu/InsightFace/raw/master/images/8_fp_0.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/8_fp_1.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/9_fp_0.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/9_fp_1.jpg)|
 
-##### 假阴性
+##### False Negative
 1|2|1|2|
 |---|---|---|---|
 |![image](https://github.com/foamliu/InsightFace/raw/master/images/0_fn_0.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/0_fn_1.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/1_fn_0.jpg)|![image](https://github.com/foamliu/InsightFace/raw/master/images/1_fn_1.jpg)|
