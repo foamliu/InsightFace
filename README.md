@@ -1,7 +1,15 @@
 # InsightFace
 
-Implementation of Additive Angular Margin Loss for Deep Face Detection [paper](https://arxiv.org/pdf/1801.07698.pdf).
-
+Implementation of Additive Angular Margin Loss for Deep Face Detection.
+[paper](https://arxiv.org/pdf/1801.07698.pdf).
+```
+@article{deng2018arcface,
+title={ArcFace: Additive Angular Margin Loss for Deep Face Recognition},
+author={Deng, Jiankang and Guo, Jia and Niannan, Xue and Zafeiriou, Stefanos},
+journal={arXiv:1801.07698},
+year={2018}
+}
+```
 ## DataSet
 
 CASIA WebFace DataSet, 494,414 faces over 10,575 identities.
