@@ -137,6 +137,7 @@ def visualize(threshold):
     plt.hist(ones, bins, alpha=0.5, label='1')
     plt.legend(loc='upper right')
     plt.plot([threshold, threshold], [0, 100], 'k-', lw=2)
+    plt.savefig('images/θj_dist.png')
     plt.show()
 
 
