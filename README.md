@@ -74,9 +74,10 @@ $ python lfw_eval.py
 ### Results
 #|image size|network|use-se|loss func|gamma|batch size|weight decay|s|m|LFW accuracy|
 |---|---|---|---|---|---|---|---|---|---|---|
-|1|112x112|ResNet-152|True|focal|2.0|128|5e-4|50|0.5|99.38%|
-|2|112x112|ResNet-101|True|focal|2.0|256|5e-4|50|0.5|99.27%|
-|3|112x112|ResNet-101|False|focal|2.0|256|5e-4|50|0.5|99.23%|
+|1|112x112|ResNet-152|True|ce|na|128|5e-4|50|0.5|99.42%|
+|2|112x112|ResNet-152|True|focal|2.0|128|5e-4|50|0.5|99.38%|
+|3|112x112|ResNet-101|True|focal|2.0|256|5e-4|50|0.5|99.27%|
+|4|112x112|ResNet-101|False|focal|2.0|256|5e-4|50|0.5|99.23%|
 
 ### θj Distribution
 
