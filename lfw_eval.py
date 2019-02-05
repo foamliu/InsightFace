@@ -151,7 +151,7 @@ def visualize(threshold):
         r'Histogram : mu_0={:.4f},sigma_0={:.4f}, mu_1={:.4f},sigma_1={:.4f}'.format(mu_0, sigma_0, mu_1, sigma_1))
 
     plt.legend(loc='upper right')
-    plt.plot([threshold, threshold], [0, 1], 'k-', lw=2)
+    plt.plot([threshold, threshold], [0, 0.1], 'k-', lw=2)
     plt.savefig('images/theta_dist.png')
     plt.show()
 
