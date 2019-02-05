@@ -148,7 +148,7 @@ def visualize(threshold):
     plt.xlabel('theta')
     plt.ylabel('theta j Distribution')
     plt.title(
-        r'Histogram : mu_0={:.2f},sigma_0={:.2f}, mu_1={:.2f},sigma_1={:.2f}'.format(mu_0, sigma_0, mu_1, sigma_1))
+        r'Histogram : mu_0={:.4f},sigma_0={:.4f}, mu_1={:.4f},sigma_1={:.4f}'.format(mu_0, sigma_0, mu_1, sigma_1))
 
     plt.legend(loc='upper right')
     plt.plot([threshold, threshold], [0, 100], 'k-', lw=2)
