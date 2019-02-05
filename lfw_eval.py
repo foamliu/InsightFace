@@ -134,8 +134,8 @@ def visualize(threshold):
 
     bins = np.linspace(0, 180, 181)
 
-    plt.hist(zeros, bins, alpha=0.5, label='0')
-    plt.hist(ones, bins, alpha=0.5, label='1')
+    plt.hist(zeros, bins, normed=1, alpha=0.5, label='0', facecolor='red')
+    plt.hist(ones, bins, normaed=1, alpha=0.5, label='1', facecolor='blue')
 
     mu_0 = np.mean(zeros)
     sigma_0 = np.std(zeros)
