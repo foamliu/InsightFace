@@ -5,8 +5,8 @@ import random
 import tarfile
 
 import cv2 as cv
-import matplotlib.mlab as mlab
 import numpy as np
+import scipy.stats
 import torch
 from matplotlib import pyplot as plt
 from torchvision import transforms
@@ -139,11 +139,11 @@ def visualize(threshold):
 
     mu_0 = np.mean(zeros)
     sigma_0 = np.std(zeros)
-    y_0 = mlab.normpdf(bins, mu_0, sigma_0)
+    y_0 = scipy.stats.norm.pdf(bins, mu_0, sigma_0)
     plt.plot(bins, y_0, 'r--')
     mu_1 = np.mean(ones)
     sigma_1 = np.std(ones)
-    y_1 = mlab.normpdf(bins, mu_1, sigma_1)
+    y_1 = scipy.stats.norm.pdf(bins, mu_1, sigma_1)
     plt.plot(bins, y_1, 'b--')
     plt.xlabel('theta')
     plt.ylabel('theta j Distribution')
