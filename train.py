@@ -118,7 +118,8 @@ def train_net(args):
         print('{} seconds'.format(delta.seconds))
 
         # One epoch's validation
-        if epoch > 10 and epoch % 2 == 0 and not args.full_log:
+        # if epoch > 10 and epoch % 2 == 0 and not args.full_log:
+        if epoch >= 5 and not args.full_log:
             start = datetime.now()
             lfw_acc, threshold = lfw_test(model)
             writer.add_scalar('LFW Accuracy', lfw_acc, epoch)
