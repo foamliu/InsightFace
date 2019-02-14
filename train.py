@@ -6,9 +6,9 @@ import numpy as np
 import torch
 from tensorboardX import SummaryWriter
 from torch import nn
-from torch.optim.lr_scheduler import MultiStepLR
+from torch.optim.lr_scheduler import StepLR
 
-from config import device, num_workers, grad_clip, print_freq, num_samples
+from config import device, num_workers, grad_clip, print_freq
 from data_gen import ArcFaceDataset
 from focal_loss import FocalLoss
 from lfw_eval import lfw_test
@@ -86,11 +86,7 @@ def train_net(args):
                                                num_workers=num_workers,
                                                pin_memory=True)
 
-    # scheduler = StepLR(optimizer, step_size=args.lr_step, gamma=0.1)
-    milestones = [20000, 28000]  # 20k and 28k
-    milestones = list((np.array(milestones) / num_samples * args.batch_size).astype(np.int))
-
-    scheduler = MultiStepLR(optimizer, milestones=milestones, gamma=0.1)
+    scheduler = StepLR(optimizer, step_size=args.lr_step, gamma=0.1)
 
     # Epochs
     for epoch in range(start_epoch, args.end_epoch):
@@ -118,8 +114,7 @@ def train_net(args):
         print('{} seconds'.format(delta.seconds))
 
         # One epoch's validation
-        # if epoch > 10 and epoch % 2 == 0 and not args.full_log:
-        if epoch >= 5 and not args.full_log:
+        if epoch > 10 and epoch % 2 == 0 and not args.full_log:
             start = datetime.now()
             lfw_acc, threshold = lfw_test(model)
             writer.add_scalar('LFW Accuracy', lfw_acc, epoch)
